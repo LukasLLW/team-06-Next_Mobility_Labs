@@ -4,6 +4,11 @@ export function router() {
   const app = document.querySelector("#app");
   const path = window.location.hash || "#/";
 
-  const page = routes[path] || routes["#/"];
-  app.innerHTML = page();
+  const route = routes[path] || routes["#/"];
+
+  app.innerHTML = route.page();
+
+  if (typeof route.init === "function") {
+    route.init();
+  }
 }

@@ -1,21 +1,22 @@
-import { LandingPage } from "./pages/LandingPage.js";
-import { LoginPage } from "./pages/LoginPage.js";
+import { LandingPage, initLandingPage } from "./pages/LandingPage.js";
 import { FleetCalculatorPage } from "./pages/fleet/FleetCalculatorPage.js";
-import { FleetDashboardPage } from "./pages/fleet/FleetDashboardPage.js";
-import { FleetEarningsDetailPage } from "./pages/fleet/FleetEarningsDetailPage.js";
-import { GridMarketplacePage } from "./pages/grid/GridMarketplacePage.js";
-import { GridDashboardPage } from "./pages/grid/GridDashboardPage.js";
-import { GridBookingDetailPage } from "./pages/grid/GridBookingDetailPage.js";
+import { HowItWorksPage } from "./how_it_works.js";
 
 export const routes = {
-  "#/": LandingPage,
-  "#/login": LoginPage,
+  "#/": {
+    page: LandingPage,
+    init: initLandingPage,
+  },
 
-  "#/fleet-calculator": FleetCalculatorPage,
-  "#/fleet-dashboard": FleetDashboardPage,
-  "#/fleet-earnings": FleetEarningsDetailPage,
+  "#/fleet-calculator": {
+    page: FleetCalculatorPage,
+  },
 
-  "#/grid-marketplace": GridMarketplacePage,
-  "#/grid-dashboard": GridDashboardPage,
-  "#/grid-booking": GridBookingDetailPage,
+  "#/how-it-works": {
+    page: HowItWorksPage,
+  },
+
+  "#how-it-works": {
+    page: HowItWorksPage,
+  },
 };
