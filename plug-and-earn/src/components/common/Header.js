@@ -7,7 +7,7 @@ export function Header() {
       </a>
 
       <nav class="main-nav">
-        <a href="#how-it-works">How it works</a>
+        <a href="#/how-it-works">How it works</a>
         <a href="#solutions">Solutions</a>
         <a href="#pricing">Pricing</a>
         <a href="#resources">Resources</a>

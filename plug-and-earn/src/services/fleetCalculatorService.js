@@ -1,3 +1,7 @@
+const USE_PYTHON_BACKEND = false;
+
+const PYTHON_BACKEND_URL = "http://localhost:8000/api/fleet/calculate";
+
 const drivingPatternConfig = {
   delivery: {
     availableHoursPerDay: 10,
@@ -35,57 +39,68 @@ const drivingPatternConfig = {
   },
 };
 
-export function calculateFleetResult(input) {
-  const config = drivingPatternConfig[input.drivingPattern];
+export async function calculateFleetResult(input) {
+  if (USE_PYTHON_BACKEND) {
+    return calculateWithPythonBackend(input);
+  }
 
+  return calculateWithDemoModel(input);
+}
+
+async function calculateWithPythonBackend(input) {
+  const response = await fetch(PYTHON_BACKEND_URL, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(input),
+  });
+
+  if (!response.ok) {
+    throw new Error(`Python backend failed with status ${response.status}`);
+  }
+
+  return response.json();
+}
+
+function calculateWithDemoModel(input) {
   const vehicleTypes = Array.isArray(input.vehicleTypes)
     ? input.vehicleTypes
     : [];
 
-  let totalVehicles = 0;
-  let aggregatedCapacityKw = 0;
-  let totalBatteryValue = 0;
+  let dailyRevenue = 0;
+  let dailyDegradationCost = 0;
 
   vehicleTypes.forEach((vehicleType) => {
+    const config =
+      drivingPatternConfig[vehicleType.drivingPattern] ||
+      drivingPatternConfig.corporate;
+
     const vehicleCount = cleanNumber(vehicleType.vehicleCount);
     const batteryCost = cleanNumber(vehicleType.batteryCost);
     const batteryCapacity = cleanNumber(vehicleType.batteryCapacity);
     const chargerPower = cleanNumber(vehicleType.chargerPower);
 
     const usablePowerPerVehicle = Math.min(chargerPower, batteryCapacity * 0.35);
+    const capacityKw = usablePowerPerVehicle * vehicleCount;
+    const batteryValue = batteryCost * vehicleCount;
 
-    totalVehicles += vehicleCount;
-    aggregatedCapacityKw += usablePowerPerVehicle * vehicleCount;
-    totalBatteryValue += batteryCost * vehicleCount;
+    const typeDailyRevenue =
+      capacityKw *
+      config.availableHoursPerDay *
+      config.utilization *
+      config.revenuePerKwPerHour;
+
+    const typeDailyDegradationCost =
+      batteryValue * 0.00025 * config.utilization;
+
+    dailyRevenue += typeDailyRevenue;
+    dailyDegradationCost += typeDailyDegradationCost;
   });
 
-  const aggregatedCapacityMW = aggregatedCapacityKw / 1000;
-
-  const dailyRevenue =
-    aggregatedCapacityKw *
-    config.availableHoursPerDay *
-    config.utilization *
-    config.revenuePerKwPerHour;
-
-  const dailyDegradationCost =
-    totalBatteryValue * 0.00025 * config.utilization;
-
-  const week = buildPeriodResult(dailyRevenue, dailyDegradationCost, 7);
-  const month = buildPeriodResult(dailyRevenue, dailyDegradationCost, 30);
-  const quarter = buildPeriodResult(dailyRevenue, dailyDegradationCost, 90);
-
   return {
-    week,
-    month,
-    quarter,
-
-    meta: {
-      aggregatedCapacityMW,
-      totalVehicles,
-      utilization: Math.round(config.utilization * 100),
-      breakEven: month.netProfit > 0 ? "Profitable" : "Not profitable",
-      risk: config.risk,
-    },
+    week: buildPeriodResult(dailyRevenue, dailyDegradationCost, 7),
+    month: buildPeriodResult(dailyRevenue, dailyDegradationCost, 30),
   };
 }
 
