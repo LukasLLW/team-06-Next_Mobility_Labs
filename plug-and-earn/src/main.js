@@ -29,7 +29,7 @@ const content = {
 
   grid: {
     label: "FOR ENERGY BUYERS",
-    title: `Access reliable flexibility<br />when the grid needs it.`,
+    title: `Access reliable <br />when the grid needs it.`,
     text:
       "Source verified EV battery capacity from commercial fleets. Flexible. Scalable. Sustainable.",
     cta: "View available capacity",
