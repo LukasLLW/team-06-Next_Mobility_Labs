@@ -1,24 +1,9 @@
+import { Header } from "../components/common/Header.js";
+
 export function LandingPage() {
   return `
     <main class="landing-page fleet-mode">
-      <header class="site-header">
-        <a href="#" class="brand">
-          <strong>Plug<span>&</span>Earn</strong>
-          <small>V2G MARKETPLACE</small>
-        </a>
-
-        <nav class="main-nav">
-          <a href="#how-it-works">How it works</a>
-          <a href="#solutions">Solutions</a>
-          <a href="#pricing">Pricing</a>
-          <a href="#resources">Resources</a>
-        </nav>
-
-        <div class="header-actions">
-          <a href="#/login" class="btn btn-login">Log in</a>
-          <a href="#/login" class="btn btn-signup">Sign up</a>
-        </div>
-      </header>
+      ${Header()}
 
       <section class="hero-area">
         <div class="segmented-toggle">
@@ -70,4 +55,81 @@ export function LandingPage() {
       </section>
     </main>
   `;
+}
+
+export function initLandingPage() {
+  const page = document.querySelector(".landing-page");
+
+  const fleetTab = document.querySelector("#fleet-tab");
+  const gridTab = document.querySelector("#grid-tab");
+
+  const heroLabel = document.querySelector("#hero-label");
+  const heroTitle = document.querySelector("#hero-title");
+  const heroText = document.querySelector("#hero-text");
+  const heroPrimary = document.querySelector("#hero-primary");
+
+  const fleetImage = document.querySelector(".fleet-image");
+  const gridImage = document.querySelector(".grid-image");
+
+  if (
+    !page ||
+    !fleetTab ||
+    !gridTab ||
+    !heroLabel ||
+    !heroTitle ||
+    !heroText ||
+    !heroPrimary ||
+    !fleetImage ||
+    !gridImage
+  ) {
+    return;
+  }
+
+  const content = {
+    fleet: {
+      label: "FOR FLEET OPERATORS",
+      title: `Turn parked EV fleets<br />into <span>revenue.</span>`,
+      text:
+        "Offer your available battery capacity to the grid and earn money while maintaining your operations. We handle the rest.",
+      cta: "Calculate earnings",
+      href: "#/fleet-calculator",
+    },
+
+    grid: {
+      label: "FOR ENERGY BUYERS",
+      title: `Access reliable <br />grid flexibility.</span>`,
+      text:
+        "Source verified EV battery capacity from commercial fleets. Flexible. Scalable. Sustainable.",
+      cta: "View available capacity",
+      href: "#/grid-marketplace",
+    },
+  };
+
+  function setMode(mode) {
+    const data = content[mode];
+
+    page.classList.add("is-changing");
+
+    page.classList.toggle("fleet-mode", mode === "fleet");
+    page.classList.toggle("grid-mode", mode === "grid");
+
+    fleetTab.classList.toggle("active", mode === "fleet");
+    gridTab.classList.toggle("active", mode === "grid");
+
+    fleetImage.classList.toggle("active", mode === "fleet");
+    gridImage.classList.toggle("active", mode === "grid");
+
+    setTimeout(() => {
+      heroLabel.textContent = data.label;
+      heroTitle.innerHTML = data.title;
+      heroText.textContent = data.text;
+      heroPrimary.innerHTML = `${data.cta} <span>→</span>`;
+      heroPrimary.href = data.href;
+
+      page.classList.remove("is-changing");
+    }, 130);
+  }
+
+  fleetTab.addEventListener("click", () => setMode("fleet"));
+  gridTab.addEventListener("click", () => setMode("grid"));
 }
