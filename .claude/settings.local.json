@@ -1,0 +1,19 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(pip --version)",
+      "Bash(dir simulator *)",
+      "WebFetch(domain:www.smard.de)",
+      "Bash(python -c \"import requests; r = requests.get\\('https://www.smard.de/app/chart_data/4169/DE/index_hour.json', timeout=15\\); print\\(r.status_code\\); print\\(r.text[:500]\\)\")",
+      "Bash(pip install *)",
+      "Bash(python -c \"from sim.prices import load_prices, price_source; df = load_prices\\(\\); print\\('source:', price_source\\(\\)\\); print\\('rows:', len\\(df\\)\\); print\\(df.head\\(\\)\\); print\\('mean €/MWh:', df['price_eur_mwh'].mean\\(\\)\\); print\\('min/max:', df['price_eur_mwh'].min\\(\\), df['price_eur_mwh'].max\\(\\)\\)\")",
+      "Bash(del data\\\\smard_dayahead_2025.csv)",
+      "Bash(python -c \"from sim.prices import load_prices, price_source; df = load_prices\\(\\); print\\('source:', price_source\\(\\)\\); print\\('rows:', len\\(df\\), '/ 8760 expected'\\); print\\('first:', df.index.min\\(\\)\\); print\\('last:', df.index.max\\(\\)\\)\")",
+      "Bash(python -c ' *)",
+      "Bash(streamlit run *)",
+      "Bash(grep -q \"You can now view your Streamlit app\" \"C:\\\\\\\\Users\\\\\\\\Eurhope\\\\\\\\AppData\\\\\\\\Local\\\\\\\\Temp\\\\\\\\claude\\\\\\\\C--Bjoern-team-06-Next-Mobility-Labs\\\\\\\\120c8100-d410-4c49-b1d5-51531d885f6a\\\\\\\\tasks\\\\\\\\beb5yy31z.output\")",
+      "Bash(ls \"C:\\\\Bjoern\\\\team-06-Next_Mobility_Labs\\\\.claude\" 2>nul ; mkdir \"C:\\\\Bjoern\\\\team-06-Next_Mobility_Labs\\\\.claude\" 2>nul)",
+      "mcp__Claude_Preview__preview_start"
+    ]
+  }
+}
