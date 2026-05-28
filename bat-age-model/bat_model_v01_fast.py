@@ -543,7 +543,7 @@ def cell_model_rest(dt, temp_cell, temp_ambient):  # used indirectly in fast mod
 
 # documentation in bat_model_v01.py!
 def init_step(ixs, cap_aged):  # used indirectly in fast model
-    v_cell_df = pd.Series(0, index=ixs)
+    v_cell_df = pd.Series(0.0, index=ixs)  # float statt int (pandas>=2.0 Kompatibilitaet)
     i_cell_df = v_cell_df.copy()
     p_cell_df = v_cell_df.copy()
     temp_cell_df = v_cell_df.copy()
@@ -586,7 +586,7 @@ def apply_aging_df(cap_aged, aging_states, dt_resolution, v_cell_df, i_cell_df, 
     time_sum = pd.Series(dt_resolution, index=v_cell.index)
 
     # resample with time_resolution (use averaging)
-    pd_resolution = f'%uS' % AGE_APPLY_PERIOD
+    pd_resolution = f'%us' % AGE_APPLY_PERIOD  # kleines 's' (pandas>=2.0 Kompatibilitaet)
     v_cell = v_cell.resample(pd_resolution).mean()
     i_cell = i_cell.resample(pd_resolution).mean()
     temp_cell = temp_cell.resample(pd_resolution).mean()
