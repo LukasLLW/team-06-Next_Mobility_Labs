@@ -30,12 +30,12 @@ from engine.api import run_simulation
 # ===========================================================================
 vehicle_types = [
     {"count": 20, "log": "demodata/fahrtdaten_2025_01.csv",
-     "battery": {"capacity_kwh": 75, "power_kw": 22, "soc_min_frac": 0.10,
-                 "soc_max_frac": 0.90, "cost_eur_per_kwh": 160, "eol_loss_pct": 35}},
-    {"count": 15, "log": "demodata/fahrtdaten_2025_02.csv",
+     "battery": {"capacity_kwh": 77, "power_kw": 21, "soc_min_frac": 0.10,
+                 "soc_max_frac": 0.90, "cost_eur_per_kwh": 156, "eol_loss_pct": 35}},
+    {"count": 10, "log": "demodata/fahrtdaten_2025_02.csv",
      "battery": {"capacity_kwh": 60, "power_kw": 22, "soc_min_frac": 0.20,
                  "soc_max_frac": 0.80, "cost_eur_per_kwh": 140, "eol_loss_pct": 35}},
-    {"count": 35, "log": "demodata/fahrtdaten_2025_03.csv",
+    {"count": 30, "log": "demodata/fahrtdaten_2025_03.csv",
      "battery": {"capacity_kwh": 90, "power_kw": 22, "soc_min_frac": 0.10,
                  "soc_max_frac": 0.90, "cost_eur_per_kwh": 180, "eol_loss_pct": 35}},
 ]
@@ -62,7 +62,7 @@ vehicle_types = [
 cfg = {
     "vehicle_types": vehicle_types,
     "from_date": "2025-06-01",     # Startdatum
-    "days": 30,                    # Zeitraum (>=60 fuer belastbare Lebensdauer;
+    "days": 14,                    # Zeitraum (>=60 fuer belastbare Lebensdauer;
                                    #           ganzes Jahr = sehr rechenintensiv)
     "use_fcr": True,
     # 1-MW-Mindestlosgroesse: standardmaessig wird die ECHTE Flottenleistung
