@@ -1,12 +1,12 @@
 # team-06-Next_Mobility_Labs
 
-Project Name: Vehicel 2 Grid physics informed revenue simulator
+**Project Name**: Vehicel 2 Grid physics informed revenue simulator
 
-Team number: 6
+**Team number**: 6
 
-Team mates: Daniel Samoylov, Finn Karstens, Lukas Lehmann, Björn Fischer
+**Team mates**: Daniel Samoylov, Finn Karstens, Lukas Lehmann, Björn Fischer
 
-Challenge: Next Mobility Labs | Vehicle-to-Grid
+**Challenge**: Next Mobility Labs | Vehicle-to-Grid
 Renewable energy has a timing problem. Solar peaks at noon and wind blows at night, but 
 demand peaks in the evening when people come home, cook and plug in their cars. Green 
 power gets wasted when there is a surplus, and fossil plants jump in when it runs short.
@@ -18,7 +18,7 @@ is green and cheap and feed it back when the grid needs it most.
 
 The commercial platform that connects fleet operators to the energy system is still     white space. How might we build it?
 
-Problem: 
+**Problem**: 
 Fleets of electrical vehicals are a massive unused energy storage capacity.
 Companys hosting fleets like this will be interested in utilizing this unused potential 
 as a revenue sorce.
@@ -33,7 +33,7 @@ profitable FCR market is only available to players, that can provide more than 1
 storage power. Small fleets of vehicels will not be able to pass that threshold on their 
 own.
 
-Solution:
+**Solution**:
 We build a system to optimize the former mentioned trading decisions, taking into 
 account real market prices, physical battery degradation and realistic driver logs. 
 Our system is able to perform net profit optimized realtime decisions on charging, 
@@ -43,7 +43,7 @@ lost profit by not being part of our ecosystem.
 Our aim is to build an ecosystem with multiple participating fleets, which form a large 
 aggregator to pass the 1 MW threshold for the FCR participation.
 
-Start the web app: 
+**Start the web app**: 
 -open two terminals
 -execute in main root/ 
 
