@@ -58,7 +58,11 @@ OUTPUT (JSON)  - Geld in EUR, Lebensdauer in Jahren
         "no_v2g", "v2g_best", "v2g_worst",
         "reliable": true|false,               // false bei kurzen Zeitraeumen
         "note": "..."                         // Hinweis, falls unzuverlaessig
-     }
+     },
+     // auf eine Woche / einen Monat normierte BEST-CASE-Mittel (Flotte gesamt).
+     // Es gilt: net_best_eur = revenue_eur - degradation_eur
+     "per_week":  { "net_best_eur", "revenue_eur", "degradation_eur" },
+     "per_month": { "net_best_eur", "revenue_eur", "degradation_eur" }
   },
   // nur wenn include_daily: ein Wert PRO TAG, ueber die Flotte summiert
   "daily_fleet": {
