@@ -526,3 +526,524 @@
     justify-content: flex-start;
   }
 }
+
+.outlook-board {
+  margin-top: 42px;
+  position: relative;
+  overflow: hidden;
+  border: 1px solid #dbe7f5;
+  border-radius: 22px;
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.95), rgba(255,255,255,0.9)),
+    url("../../assets/images/hero-grid.svg");
+  background-size: cover;
+  box-shadow: 0 18px 45px rgba(15, 23, 42, 0.08);
+  padding: 42px 28px 42px;
+}
+
+.outlook-title {
+  margin-bottom: 34px;
+}
+
+.outlook-title h2 {
+  margin: 0 0 12px;
+  font-size: clamp(34px, 3.4vw, 48px);
+  line-height: 1.05;
+  font-weight: 950;
+  letter-spacing: -0.055em;
+  color: #08172d;
+}
+
+.outlook-title p {
+  margin: 0;
+  color: #526075;
+  font-size: 21px;
+  font-weight: 500;
+  letter-spacing: 0.03em;
+}
+
+.outlook-steps {
+  display: grid;
+  grid-template-columns: 1fr 26px 1fr 26px 1fr 26px 1fr 26px 1fr 26px 1fr;
+  align-items: stretch;
+}
+
+.outlook-step {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.outlook-step-number {
+  width: 42px;
+  height: 42px;
+  border-radius: 999px;
+  background: #e7f1ff;
+  color: #1268ee;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 950;
+  font-size: 18px;
+  margin-bottom: 18px;
+}
+
+.outlook-step h3 {
+  min-height: 62px;
+  margin: 0 0 18px;
+  text-align: center;
+  font-size: 17px;
+  line-height: 1.35;
+  font-weight: 950;
+  color: #08172d;
+}
+
+.outlook-card {
+  width: 100%;
+  min-height: 470px;
+  border: 1px solid #dfe6ee;
+  border-radius: 15px;
+  background: rgba(255,255,255,0.78);
+  box-shadow: 0 12px 32px rgba(15, 23, 42, 0.06);
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+}
+
+.outlook-arrow {
+  align-self: center;
+  justify-self: center;
+  color: #a4afbd;
+  font-size: 34px;
+  font-weight: 300;
+  margin-top: 160px;
+}
+
+.map-card-title {
+  color: #08172d;
+  font-size: 14px;
+  font-weight: 850;
+  line-height: 1.3;
+  margin-bottom: 10px;
+}
+
+.germany-map,
+.headroom-map {
+  position: relative;
+  height: 190px;
+  margin-bottom: 18px;
+  overflow: hidden;
+}
+
+.germany-map img,
+.headroom-map img {
+  width: 82%;
+  height: 100%;
+  object-fit: contain;
+  opacity: 0.42;
+  filter: grayscale(1);
+}
+
+.hotspot,
+.blue-hotspot {
+  position: absolute;
+  width: 48px;
+  height: 48px;
+  border-radius: 999px;
+  transform: translate(-50%, -50%);
+  filter: blur(8px);
+  opacity: 0.78;
+}
+
+.hotspot {
+  background: #ff884d;
+}
+
+.hotspot-one {
+  left: 34%;
+  top: 42%;
+}
+
+.hotspot-two {
+  left: 58%;
+  top: 57%;
+}
+
+.hotspot-three {
+  left: 33%;
+  top: 72%;
+}
+
+.blue-hotspot {
+  background: #1268ee;
+}
+
+.blue-one {
+  left: 36%;
+  top: 44%;
+}
+
+.blue-two {
+  left: 58%;
+  top: 58%;
+}
+
+.blue-three {
+  left: 32%;
+  top: 72%;
+}
+
+.map-scale {
+  position: absolute;
+  top: 20px;
+  right: 8px;
+  display: grid;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #08172d;
+}
+
+.scale-gradient {
+  width: 16px;
+  height: 88px;
+  border-radius: 3px;
+}
+
+.scale-gradient.red {
+  background: linear-gradient(180deg, #ef4444, #facc15, #dbeafe);
+}
+
+.scale-gradient.blue {
+  background: linear-gradient(180deg, #1268ee, #93c5fd, #eef5ff);
+}
+
+.outlook-card p {
+  color: #17233a;
+  font-size: 15px;
+  line-height: 1.55;
+  margin: 0 0 18px;
+}
+
+.outlook-note {
+  margin-top: auto;
+  min-height: 66px;
+  border-radius: 10px;
+  background: #f0f6ff;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 14px 16px;
+  color: #08172d;
+}
+
+.outlook-note img {
+  width: 34px;
+  height: 34px;
+}
+
+.outlook-note-icon {
+  width: 36px;
+  height: 36px;
+  color: #1268ee;
+  font-size: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+}
+
+.outlook-note strong {
+  font-size: 14px;
+  line-height: 1.35;
+}
+
+.soc-bubble {
+  position: absolute;
+  width: 48px;
+  height: 48px;
+  border: 1.5px solid #1268ee;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.9);
+  color: #08172d;
+  font-size: 13px;
+  font-weight: 850;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.soc-one { left: 18%; top: 34%; }
+.soc-two { left: 32%; top: 22%; }
+.soc-three { right: 30%; top: 20%; }
+.soc-four { right: 12%; top: 22%; }
+.soc-five { left: 48%; top: 43%; }
+.soc-six { right: 25%; top: 60%; }
+.soc-seven { left: 40%; top: 68%; }
+.soc-eight { left: 25%; top: 78%; }
+
+.headroom-legend {
+  position: absolute;
+  left: 12px;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+  color: #08172d;
+}
+
+.headroom-legend div {
+  width: 54px;
+  height: 8px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #dbeafe, #1268ee);
+}
+
+.objective-row {
+  height: 150px;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr auto 1fr;
+  align-items: center;
+  justify-items: center;
+  gap: 10px;
+  font-size: 28px;
+  color: #526075;
+}
+
+.objective-circle {
+  width: 58px;
+  height: 58px;
+  border-radius: 999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 30px;
+  font-weight: 800;
+  background: #ffffff;
+}
+
+.objective-circle.green {
+  border: 2px solid #009845;
+  color: #009845;
+}
+
+.objective-circle.blue {
+  border: 2px solid #1268ee;
+  color: #1268ee;
+}
+
+.objective-circle.purple {
+  border: 2px solid #6554c0;
+  color: #6554c0;
+}
+
+.objective-labels {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  text-align: center;
+  gap: 8px;
+  margin-bottom: 24px;
+  font-size: 13px;
+  font-weight: 800;
+  color: #08172d;
+}
+
+.battery-marker {
+  position: absolute;
+  width: 32px;
+  height: 42px;
+  border-radius: 8px;
+  background: rgba(17, 152, 79, 0.18);
+  border: 2px solid #11984f;
+  color: #11984f;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 900;
+}
+
+.marker-one { left: 32%; top: 34%; }
+.marker-two { left: 56%; top: 52%; }
+.marker-three { left: 60%; top: 28%; }
+.marker-four { left: 36%; top: 70%; }
+
+.outlook-learning {
+  height: 190px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.outlook-learning-ring {
+  width: 145px;
+  height: 145px;
+  border-radius: 999px;
+  border: 22px solid rgba(18, 104, 238, 0.2);
+  border-top-color: #60a5fa;
+  border-right-color: #1268ee;
+  border-bottom-color: #2563eb;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.outlook-brain {
+  width: 70px;
+  height: 70px;
+  border-radius: 24px;
+  border: 2px solid #1268ee;
+  color: #1268ee;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 38px;
+}
+
+.outlook-check-list {
+  list-style: none;
+  background: rgba(248,250,252,0.92);
+  border-radius: 12px;
+  padding: 16px;
+  margin: 0 0 18px;
+  display: grid;
+  gap: 14px;
+}
+
+.outlook-check-list li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #17233a;
+  font-size: 14px;
+  line-height: 1.35;
+}
+
+.outlook-check-list li::before {
+  content: "✓";
+  width: 22px;
+  height: 22px;
+  border-radius: 999px;
+  background: #e7f1ff;
+  color: #1268ee;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 950;
+  flex: 0 0 auto;
+}
+
+.outlook-line {
+  margin: 36px auto 16px;
+  width: 84%;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+}
+
+.outlook-line-left,
+.outlook-line-right {
+  height: 2px;
+  border-top: 2px dashed #b7c1ce;
+}
+
+.outlook-check {
+  width: 50px;
+  height: 50px;
+  border-radius: 999px;
+  background: #1268ee;
+  color: #ffffff;
+  box-shadow: 0 10px 25px rgba(18, 104, 238, 0.28);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 26px;
+  font-weight: 950;
+}
+
+.outlook-result-title {
+  text-align: center;
+  margin: 0 0 16px;
+  font-size: 20px;
+  font-weight: 950;
+  color: #08172d;
+}
+
+.outlook-result-bar {
+  width: min(1220px, 84%);
+  margin: 0 auto;
+  border: 1px solid #dfe6ee;
+  border-radius: 15px;
+  background: rgba(255,255,255,0.84);
+  display: grid;
+  grid-template-columns: 1fr auto 1fr auto 1fr auto 1fr auto 1fr;
+  align-items: center;
+  padding: 18px 28px;
+  box-shadow: 0 12px 32px rgba(15, 23, 42, 0.06);
+}
+
+.outlook-result-item {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 15px;
+  color: #17233a;
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+.outlook-result-item img {
+  width: 44px;
+  height: 44px;
+  padding: 8px;
+  border-radius: 999px;
+  background: #f0f6ff;
+}
+
+.outlook-result-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 999px;
+  color: #1268ee;
+  font-size: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.outlook-result-icon.green {
+  color: #11984f;
+}
+
+.outlook-result-separator {
+  width: 1px;
+  height: 50px;
+  background: #dfe6ee;
+}
+
+@media (max-width: 1450px) {
+  .outlook-steps {
+    grid-template-columns: 1fr;
+    gap: 22px;
+  }
+
+  .outlook-arrow {
+    display: none;
+  }
+
+  .outlook-card {
+    min-height: auto;
+  }
+
+  .outlook-result-bar {
+    width: 100%;
+    grid-template-columns: 1fr;
+    gap: 18px;
+  }
+
+  .outlook-result-separator {
+    width: 100%;
+    height: 1px;
+  }
+}

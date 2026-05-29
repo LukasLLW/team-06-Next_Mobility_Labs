@@ -64,6 +64,7 @@ export function HowItWorksPage() {
             </div>
           </div>
         </section>
+        ${OutlookSection()}
       </section>
     </main>
   `;
@@ -228,6 +229,288 @@ function StepFive() {
           The penalty is adjusted iteratively until theoretical and real results
           align. The optimized strategy is then applied.
         </p>
+      </div>
+    </article>
+  `;
+}
+
+function OutlookSection() {
+  return `
+    <section class="outlook-board">
+      <div class="outlook-title">
+        <h2>Our FTR (Follow The Region) Algorithm</h2>
+        <p>Always energy available where it’s needed</p>
+      </div>
+
+      <div class="outlook-steps">
+        ${OutlookStepOne()}
+        <div class="outlook-arrow">→</div>
+
+        ${OutlookStepTwo()}
+        <div class="outlook-arrow">→</div>
+
+        ${OutlookStepThree()}
+        <div class="outlook-arrow">→</div>
+
+        ${OutlookStepFour()}
+        <div class="outlook-arrow">→</div>
+
+        ${OutlookStepFive()}
+        <div class="outlook-arrow">→</div>
+
+        ${OutlookStepSix()}
+      </div>
+
+      <div class="outlook-line">
+        <div class="outlook-line-left"></div>
+        <div class="outlook-check">✓</div>
+        <div class="outlook-line-right"></div>
+      </div>
+
+      <h3 class="outlook-result-title">
+        Result: Energy where it’s needed, when it’s needed
+      </h3>
+
+      <div class="outlook-result-bar">
+        <div class="outlook-result-item">
+          <div class="outlook-result-icon">⌖</div>
+          <span>High availability in<br />future hotspots</span>
+        </div>
+
+        <div class="outlook-result-separator"></div>
+
+        <div class="outlook-result-item">
+          <div class="outlook-result-icon">⚡</div>
+          <span>More opportunities<br />to generate revenue</span>
+        </div>
+
+        <div class="outlook-result-separator"></div>
+
+        <div class="outlook-result-item">
+          <img src="./assets/icons/grid.svg" alt="" />
+          <span>Better reliability for<br />grid & customers</span>
+        </div>
+
+        <div class="outlook-result-separator"></div>
+
+        <div class="outlook-result-item">
+          <img src="./assets/icons/euro.svg" alt="" />
+          <span>Higher utilization &<br />fleet profitability</span>
+        </div>
+
+        <div class="outlook-result-separator"></div>
+
+        <div class="outlook-result-item">
+          <div class="outlook-result-icon green">◇</div>
+          <span>More sustainable<br />energy ecosystem</span>
+        </div>
+      </div>
+    </section>
+  `;
+}
+
+function OutlookStepOne() {
+  return `
+    <article class="outlook-step">
+      <div class="outlook-step-number">1</div>
+      <h3>24h demand forecast<br />by region</h3>
+
+      <div class="outlook-card">
+        <div class="map-card-title">Predicted energy demand<br />(next 24h)</div>
+
+        <div class="germany-map demand-map">
+          <img src="./assets/images/map-placeholder.svg" alt="" />
+          <span class="hotspot hotspot-one"></span>
+          <span class="hotspot hotspot-two"></span>
+          <span class="hotspot hotspot-three"></span>
+
+          <div class="map-scale">
+            <span>High</span>
+            <div class="scale-gradient red"></div>
+            <span>Low</span>
+          </div>
+        </div>
+
+        <p>
+          We forecast energy demand hotspots for the next 24 hours for all relevant regions.
+        </p>
+
+        <div class="outlook-note">
+          <div class="outlook-note-icon">⌖</div>
+          <strong>Identify where energy<br />will be needed</strong>
+        </div>
+      </div>
+    </article>
+  `;
+}
+
+function OutlookStepTwo() {
+  return `
+    <article class="outlook-step">
+      <div class="outlook-step-number">2</div>
+      <h3>Ensure local headroom<br />in advance</h3>
+
+      <div class="outlook-card">
+        <div class="map-card-title">Fleet state of charge example</div>
+
+        <div class="headroom-map">
+          <img src="./assets/images/map-placeholder.svg" alt="" />
+
+          <span class="soc-bubble soc-one">95%</span>
+          <span class="soc-bubble soc-two">90%</span>
+          <span class="soc-bubble soc-three">85%</span>
+          <span class="soc-bubble soc-four">80%</span>
+          <span class="soc-bubble soc-five">70%</span>
+          <span class="soc-bubble soc-six">60%</span>
+          <span class="soc-bubble soc-seven">50%</span>
+          <span class="soc-bubble soc-eight">30%</span>
+
+          <div class="headroom-legend">
+            <span>Low headroom</span>
+            <div></div>
+            <span>High headroom</span>
+          </div>
+        </div>
+
+        <p>
+          We ensure that vehicles in expected hotspots have enough available capacity in advance.
+        </p>
+
+        <div class="outlook-note">
+          <img src="./assets/icons/battery.svg" alt="" />
+          <strong>Keep headroom where<br />it matters</strong>
+        </div>
+      </div>
+    </article>
+  `;
+}
+
+function OutlookStepThree() {
+  return `
+    <article class="outlook-step">
+      <div class="outlook-step-number">3</div>
+      <h3>Calculate headroom<br />value per region</h3>
+
+      <div class="outlook-card">
+        <div class="map-card-title">Headroom value<br />(next 24h)</div>
+
+        <div class="germany-map value-map">
+          <img src="./assets/images/map-placeholder.svg" alt="" />
+          <span class="blue-hotspot blue-one"></span>
+          <span class="blue-hotspot blue-two"></span>
+          <span class="blue-hotspot blue-three"></span>
+
+          <div class="map-scale">
+            <span>High<br />value</span>
+            <div class="scale-gradient blue"></div>
+            <span>Low<br />value</span>
+          </div>
+        </div>
+
+        <p>
+          We calculate a regional “headroom value” based on forecasted shortages and the ability to respond.
+        </p>
+
+        <div class="outlook-note">
+          <div class="outlook-note-icon">⌁</div>
+          <strong>Quantify flexibility<br />value by location</strong>
+        </div>
+      </div>
+    </article>
+  `;
+}
+
+function OutlookStepFour() {
+  return `
+    <article class="outlook-step">
+      <div class="outlook-step-number">4</div>
+      <h3>Add FTR value to<br />optimization</h3>
+
+      <div class="outlook-card">
+        <div class="map-card-title">Optimization objective</div>
+
+        <div class="objective-row">
+          <div class="objective-circle green">€</div>
+          <span>+</span>
+          <div class="objective-circle blue">⌖</div>
+          <span>=</span>
+          <div class="objective-circle purple">⌁</div>
+        </div>
+
+        <div class="objective-labels">
+          <span>Revenue<br />(energy)</span>
+          <span>FTR value<br />(headroom)</span>
+          <span>Total<br />objective</span>
+        </div>
+
+        <p>
+          The FTR value is added to the standard revenue optimization to guide charging and discharging decisions.
+        </p>
+
+        <div class="outlook-note">
+          <div class="outlook-note-icon">▣</div>
+          <strong>Smarter decisions<br />with future grid needs</strong>
+        </div>
+      </div>
+    </article>
+  `;
+}
+
+function OutlookStepFive() {
+  return `
+    <article class="outlook-step">
+      <div class="outlook-step-number">5</div>
+      <h3>Execute & keep energy<br />ready in hotspots</h3>
+
+      <div class="outlook-card">
+        <div class="map-card-title">Energy available<br />when needed</div>
+
+        <div class="germany-map ready-map">
+          <img src="./assets/images/map-placeholder.svg" alt="" />
+          <span class="battery-marker marker-one">▣</span>
+          <span class="battery-marker marker-two">▣</span>
+          <span class="battery-marker marker-three">▣</span>
+          <span class="battery-marker marker-four">▣</span>
+          <span class="blue-hotspot blue-one"></span>
+          <span class="blue-hotspot blue-two"></span>
+        </div>
+
+        <p>
+          The fleet is positioned with enough available energy in high-value regions before demand peaks occur.
+        </p>
+
+        <div class="outlook-note">
+          <div class="outlook-note-icon">▱</div>
+          <strong>Be ready when the<br />market needs you</strong>
+        </div>
+      </div>
+    </article>
+  `;
+}
+
+function OutlookStepSix() {
+  return `
+    <article class="outlook-step">
+      <div class="outlook-step-number">6</div>
+      <h3>Adapt & improve<br />continuously</h3>
+
+      <div class="outlook-card">
+        <div class="outlook-learning">
+          <div class="outlook-learning-ring">
+            <div class="outlook-brain">☷</div>
+          </div>
+        </div>
+
+        <ul class="outlook-check-list">
+          <li>Compare forecast vs. reality</li>
+          <li>Improve headroom value calculation</li>
+          <li>Continuously refine FTR strategy</li>
+        </ul>
+
+        <div class="outlook-note">
+          <div class="outlook-note-icon">↻</div>
+          <strong>Learn, adapt,<br />outperform</strong>
+        </div>
       </div>
     </article>
   `;
