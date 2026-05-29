@@ -1,10 +1,9 @@
 import { Header } from "../../components/common/Header.js";
-// HIER: Der Import deines neuen Services
-import { calculateFleetResult } from "../../services/fleetCalculatorService.js";
+import { calculateFleetResult } from "../../services/fleetCalculatorService.js?v=1000";
+
+console.log("FleetCalculatorPage loaded");
 
 export function FleetCalculatorPage() {
-  setTimeout(initFleetCalculatorPage, 0);
-
   return `
     <main class="fleet-calculator-page fleet-mode">
       ${Header()}
@@ -82,7 +81,7 @@ export function FleetCalculatorPage() {
   `;
 }
 
-function initFleetCalculatorPage() {
+export function initFleetCalculatorPage() {
   const vehicleRows = document.querySelector("#vehicleRows");
   const addVehicleTypeButton = document.querySelector("#addVehicleTypeButton");
 
@@ -141,6 +140,7 @@ function initFleetCalculatorPage() {
   function createVehicleRow(values = {}) {
     const row = document.createElement("div");
     row.className = "vehicle-row";
+    row.csvFile = null;
 
     row.innerHTML = `
       <div class="vehicle-row-header">
@@ -266,27 +266,29 @@ function initFleetCalculatorPage() {
       csvDropzone.classList.remove("drag-over");
 
       const file = event.dataTransfer.files[0];
-      handleVehicleCsvFile(file, csvFileName);
+      handleVehicleCsvFile(file, row, csvFileName);
     });
 
     csvInput.addEventListener("change", () => {
       const file = csvInput.files[0];
-      handleVehicleCsvFile(file, csvFileName);
+      handleVehicleCsvFile(file, row, csvFileName);
     });
 
     vehicleRows.appendChild(row);
     updateVehicleTitles();
   }
 
-  function handleVehicleCsvFile(file, csvFileNameElement) {
+  function handleVehicleCsvFile(file, row, csvFileNameElement) {
     if (!file) return;
 
     if (!file.name.toLowerCase().endsWith(".csv")) {
+      row.csvFile = null;
       csvFileNameElement.textContent = "Only CSV files are supported.";
       csvFileNameElement.classList.add("error");
       return;
     }
 
+    row.csvFile = file;
     csvFileNameElement.textContent = `Selected file: ${file.name}`;
     csvFileNameElement.classList.remove("error");
   }
@@ -305,8 +307,6 @@ function initFleetCalculatorPage() {
 
   function getVehicleTypes() {
     return [...vehicleRows.querySelectorAll(".vehicle-row")].map((row) => {
-      const csvFileName = row.querySelector(".csv-file-name").textContent.trim();
-
       return {
         model: row.querySelector(".vehicle-model").value,
         batteryCost: Number(row.querySelector(".battery-cost").value),
@@ -314,7 +314,8 @@ function initFleetCalculatorPage() {
         chargerPower: Number(row.querySelector(".charger-power").value),
         vehicleCount: Number(row.querySelector(".vehicle-count").value),
         drivingPattern: row.querySelector(".driving-pattern").value,
-        hasCsv: csvFileName.startsWith("Selected file:"),
+        hasCsv: row.csvFile instanceof File,
+        csvFile: row.csvFile,
       };
     });
   }
@@ -329,18 +330,18 @@ function initFleetCalculatorPage() {
     });
   });
 
-  // HIER: Der Klick-Event-Listener nutzt jetzt deinen echten Service!
   calculateButton.addEventListener("click", async () => {
+    console.log("Calculate button clicked");
+    console.log("Vehicle types:", getVehicleTypes());
+
     calculateButton.disabled = true;
     calculateButton.innerHTML = "Calculating...";
 
     try {
-      // Holt die aktuellen Formular-Daten und schickt sie an den Service
       const result = await calculateFleetResult({
         vehicleTypes: getVehicleTypes(),
       });
 
-      // Rendert das echte Ergebnis und blendet die Card ein
       renderResult(result);
       resultSection.classList.remove("hidden");
     } catch (error) {

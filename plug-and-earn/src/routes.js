@@ -1,5 +1,8 @@
 import { LandingPage, initLandingPage } from "./pages/LandingPage.js";
-import { FleetCalculatorPage } from "./pages/fleet/FleetCalculatorPage.js";
+import {
+  FleetCalculatorPage,
+  initFleetCalculatorPage,
+} from "./pages/fleet/FleetCalculatorPage.js";
 import { HowItWorksPage } from "./how_it_works.js";
 
 export const routes = {
@@ -10,6 +13,7 @@ export const routes = {
 
   "#/fleet-calculator": {
     page: FleetCalculatorPage,
+    init: initFleetCalculatorPage,
   },
 
   "#/how-it-works": {

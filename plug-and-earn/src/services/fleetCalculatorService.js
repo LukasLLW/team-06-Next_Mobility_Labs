@@ -1,69 +1,129 @@
-const USE_PYTHON_BACKEND = false;
+console.log("REAL service loaded: src/services/fleetCalculatorService.js");
 
-const PYTHON_BACKEND_URL = "http://localhost:8000/api/fleet/calculate";
+const USE_PYTHON_BACKEND = true;
+const PYTHON_BACKEND_URL = "http://127.0.0.1:8000/api/fleet/calculate";
 
 const drivingPatternConfig = {
   delivery: {
     availableHoursPerDay: 10,
     utilization: 0.58,
     revenuePerKwPerHour: 0.075,
-    risk: "Medium",
   },
 
   corporate: {
     availableHoursPerDay: 14,
     utilization: 0.67,
     revenuePerKwPerHour: 0.083,
-    risk: "Low",
   },
 
   municipal: {
     availableHoursPerDay: 13,
     utilization: 0.62,
     revenuePerKwPerHour: 0.078,
-    risk: "Low",
   },
 
   carsharing: {
     availableHoursPerDay: 8,
     utilization: 0.45,
     revenuePerKwPerHour: 0.07,
-    risk: "Medium",
   },
 
   logistics: {
     availableHoursPerDay: 11,
     utilization: 0.6,
     revenuePerKwPerHour: 0.08,
-    risk: "Medium",
   },
 };
 
 export async function calculateFleetResult(input) {
+  console.log("calculateFleetResult called with:", input);
+
   if (USE_PYTHON_BACKEND) {
-    return calculateWithPythonBackend(input);
+    return await calculateWithPythonBackend(input);
   }
 
   return calculateWithDemoModel(input);
 }
 
 async function calculateWithPythonBackend(input) {
-  const response = await fetch(PYTHON_BACKEND_URL, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(input),
+  console.log("Calling Python backend:", PYTHON_BACKEND_URL);
+
+  const vehicleTypes = Array.isArray(input.vehicleTypes)
+    ? input.vehicleTypes
+    : [];
+
+  const files = [];
+
+  const vehicleTypesForBackend = vehicleTypes.map((vehicleType) => {
+    const hasValidCsv = vehicleType.csvFile instanceof File;
+
+    const uploadIndex = hasValidCsv ? files.length : null;
+
+    if (hasValidCsv) {
+      files.push(vehicleType.csvFile);
+    }
+
+    return {
+      model: vehicleType.model,
+      batteryCost: vehicleType.batteryCost,
+      batteryCapacity: vehicleType.batteryCapacity,
+      chargerPower: vehicleType.chargerPower,
+      vehicleCount: vehicleType.vehicleCount,
+      drivingPattern: vehicleType.drivingPattern,
+      hasCsv: hasValidCsv,
+      uploadIndex,
+    };
   });
 
+  const payload = {
+    vehicleTypes: vehicleTypesForBackend,
+    fromDate: "2025-06-01",
+    days: 14,
+    useFcr: true,
+    assumePoolSufficient: true,
+  };
+
+  const formData = new FormData();
+  formData.append("payload", JSON.stringify(payload));
+
+  files.forEach((file) => {
+    formData.append("tripLogs", file, file.name);
+  });
+
+  console.log("Payload sent to backend:", payload);
+  console.log("Files sent to backend:", files);
+
+  const response = await fetch(PYTHON_BACKEND_URL, {
+    method: "POST",
+    body: formData,
+  });
+
+  console.log("Backend response status:", response.status);
+
   if (!response.ok) {
+    const errorText = await response.text();
+    console.error("Backend error response:", errorText);
     throw new Error(`Python backend failed with status ${response.status}`);
   }
 
-  return response.json();
+  const result = await response.json();
+
+  console.log("Backend result:", result);
+
+  if (!result.ok) {
+    throw new Error(result.error || "Python backend returned ok=false");
+  }
+
+  return {
+    week: result.week,
+    month: result.month,
+    raw: result.raw,
+  };
 }
 
 function calculateWithDemoModel(input) {
+  console.log("Using frontend demo fallback model.");
+
   const vehicleTypes = Array.isArray(input.vehicleTypes)
     ? input.vehicleTypes
     : [];
@@ -100,7 +160,7 @@ function calculateWithDemoModel(input) {
 
   return {
     week: buildPeriodResult(dailyRevenue, dailyDegradationCost, 7),
-    month: buildPeriodResult(dailyRevenue, dailyDegradationCost, 30),
+    month: buildPeriodResult(dailyRevenue, dailyDegradationCost, 365 / 12),
   };
 }
 
