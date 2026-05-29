@@ -29,9 +29,17 @@ Solution:
 Start the web app: 
     -open two terminals
     -execute in main root/ 
-        ```bash uvicorn server:app --reload --port 8000```
+
+    ```bash
+     uvicorn server:app --reload --port 8000 
+    ```
+
     -execute in second terminal in plug-and-earn/ 
-        ```bash python -m http.server 5173```
+
+    ```bash 
+    python -m http.server 5173 
+    ```
+
     -open "localhost:5173/#/" in your browser of choice
 
     (know that you might need to install dependencies)
