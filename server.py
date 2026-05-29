@@ -134,7 +134,8 @@ def build_engine_payload(
         "from_date": request.fromDate or "2025-06-01",
         "days": int(request.days or 14),
         "use_fcr": bool(request.useFcr),
-        "assume_pool_sufficient": bool(request.assumePoolSufficient),
+        "assume_pool_sufficient": False,
+        # "assume_pool_sufficient": bool(request.assumePoolSufficient),
         "include_daily": False,
         "include_per_car": False,
     }
@@ -153,11 +154,11 @@ def map_engine_result_to_frontend(engine_result: dict[str, Any]) -> dict[str, An
     month = fleet["per_month"]
 
     week_revenue = float(week["revenue_eur"])
-    week_degradation_cost = abs(float(week["degradation_eur"]))
+    week_degradation_cost = -float(week["degradation_eur"])
     week_net_profit = week_revenue - week_degradation_cost
 
     month_revenue = float(month["revenue_eur"])
-    month_degradation_cost = abs(float(month["degradation_eur"]))
+    month_degradation_cost = -float(month["degradation_eur"])
     month_net_profit = month_revenue - month_degradation_cost
 
     return {

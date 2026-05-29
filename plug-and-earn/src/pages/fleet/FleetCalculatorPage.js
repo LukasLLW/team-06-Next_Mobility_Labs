@@ -68,12 +68,12 @@ export function FleetCalculatorPage() {
               </div>
 
               <div class="result-kpi warning">
-                <span>Battery degradation cost</span>
+                <span>(Best Case) Battery degradation cost</span>
                 <strong id="weekDegradationCost">€0</strong>
               </div>
 
               <div class="result-kpi success">
-                <span>Net Profit</span>
+                <span>(Best Case) Net Profit</span>
                 <strong id="weekNetProfit">€0</strong>
               </div>
             </div>
@@ -87,12 +87,12 @@ export function FleetCalculatorPage() {
               </div>
 
               <div class="result-kpi warning">
-                <span>Battery degradation cost</span>
+                <span>(Best Case) Battery degradation cost</span>
                 <strong id="monthDegradationCost">€0</strong>
               </div>
 
               <div class="result-kpi success">
-                <span>Net Profit</span>
+                <span>(Best Case) Net Profit</span>
                 <strong id="monthNetProfit">€0</strong>
               </div>
             </div>
