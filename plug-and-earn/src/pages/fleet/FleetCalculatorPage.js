@@ -9,6 +9,28 @@ export function FleetCalculatorPage() {
       ${Header()}
 
       <section class="calculator-layout">
+      <section class="calculator-card simulation-settings-card">
+  <div class="section-title-row">
+    <div>
+      <h1>Simulation Settings</h1>
+      <p class="section-subtitle">
+        Define the simulation start date and duration used by the backend model.
+      </p>
+    </div>
+  </div>
+
+  <div class="simulation-settings-grid">
+    <label class="field">
+      <span>Simulation start date</span>
+      <input id="simulationStartDate" type="date" value="2025-06-01" />
+    </label>
+
+    <label class="field">
+      <span>Simulation duration days</span>
+      <input id="simulationDays" type="number" min="1" max="365" value="14" />
+    </label>
+  </div>
+</section>
         <section class="calculator-card">
           <div class="section-title-row">
             <div>
@@ -84,7 +106,8 @@ export function FleetCalculatorPage() {
 export function initFleetCalculatorPage() {
   const vehicleRows = document.querySelector("#vehicleRows");
   const addVehicleTypeButton = document.querySelector("#addVehicleTypeButton");
-
+ const simulationStartDate = document.querySelector("#simulationStartDate");
+const simulationDays = document.querySelector("#simulationDays");
   const calculateButton = document.querySelector("#calculateButton");
   const resultSection = document.querySelector("#resultSection");
 
@@ -160,6 +183,7 @@ export function initFleetCalculatorPage() {
           </select>
         </label>
 
+
         <label class="field">
           <span>Battery cost (€)</span>
           <input class="battery-cost" type="number" min="0" value="${values.batteryCost ?? 12000}" />
@@ -174,6 +198,11 @@ export function initFleetCalculatorPage() {
           <span>Charger power (kW)</span>
           <input class="charger-power" type="number" min="0" value="${values.chargerPower ?? 21}" />
         </label>
+
+        <label class="field">
+  <span>Max. accepted battery wear (%)</span>
+  <input class="eol-loss-pct" type="number" min="1" max="100" value="${values.eolLossPct ?? 20}" />
+</label>
 
         <label class="field">
           <span>Number of vehicles</span>
@@ -312,6 +341,7 @@ export function initFleetCalculatorPage() {
         batteryCost: Number(row.querySelector(".battery-cost").value),
         batteryCapacity: Number(row.querySelector(".battery-capacity").value),
         chargerPower: Number(row.querySelector(".charger-power").value),
+        eolLossPct: Number(row.querySelector(".eol-loss-pct").value),
         vehicleCount: Number(row.querySelector(".vehicle-count").value),
         drivingPattern: row.querySelector(".driving-pattern").value,
         hasCsv: row.csvFile instanceof File,
@@ -339,8 +369,10 @@ export function initFleetCalculatorPage() {
 
     try {
       const result = await calculateFleetResult({
-        vehicleTypes: getVehicleTypes(),
-      });
+  vehicleTypes: getVehicleTypes(),
+  fromDate: simulationStartDate.value,
+  days: Number(simulationDays.value),
+});
 
       renderResult(result);
       resultSection.classList.remove("hidden");
