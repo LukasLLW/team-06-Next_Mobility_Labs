@@ -1,4 +1,5 @@
 import { Header } from "../../components/common/Header.js";
+// HIER: Der Import deines neuen Services
 import { calculateFleetResult } from "../../services/fleetCalculatorService.js";
 
 export function FleetCalculatorPage() {
@@ -328,15 +329,18 @@ function initFleetCalculatorPage() {
     });
   });
 
+  // HIER: Der Klick-Event-Listener nutzt jetzt deinen echten Service!
   calculateButton.addEventListener("click", async () => {
     calculateButton.disabled = true;
     calculateButton.innerHTML = "Calculating...";
 
     try {
+      // Holt die aktuellen Formular-Daten und schickt sie an den Service
       const result = await calculateFleetResult({
         vehicleTypes: getVehicleTypes(),
       });
 
+      // Rendert das echte Ergebnis und blendet die Card ein
       renderResult(result);
       resultSection.classList.remove("hidden");
     } catch (error) {

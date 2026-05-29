@@ -648,8 +648,8 @@
 .hotspot,
 .blue-hotspot {
   position: absolute;
-  width: 48px;
-  height: 48px;
+  width: 2px;
+  height: 2px;
   border-radius: 999px;
   transform: translate(-50%, -50%);
   filter: blur(8px);
@@ -761,17 +761,18 @@
 
 .soc-bubble {
   position: absolute;
-  width: 48px;
-  height: 48px;
+  width: 28px;        /* Deutlich kleinerer, kompakterer Kreis */
+  height: 28px;       /* Quadratische Basis für perfekten Kreis */
   border: 1.5px solid #1268ee;
   border-radius: 999px;
-  background: rgba(255,255,255,0.9);
+  background: rgba(255, 255, 255, 0.95);
   color: #08172d;
-  font-size: 13px;
+  font-size: 10px;     /* Text minimal kleiner, damit "95%" perfekt reinpasst */
   font-weight: 850;
   display: flex;
   align-items: center;
   justify-content: center;
+  transform: translate(-50%, -50%); /* Hält den Kreis exakt auf der richtigen Position */
 }
 
 .soc-one { left: 18%; top: 34%; }
