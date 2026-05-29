@@ -2,7 +2,7 @@ import { LandingPage, initLandingPage } from "./pages/LandingPage.js";
 import {
   FleetCalculatorPage,
   initFleetCalculatorPage,
-} from "./pages/fleet/FleetCalculatorPage.js";
+} from "./pages/fleet/FleetCalculatorPage.js?v=3000";
 import { HowItWorksPage } from "./how_it_works.js";
 
 export const routes = {

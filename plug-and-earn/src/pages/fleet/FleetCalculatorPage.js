@@ -123,42 +123,119 @@ const simulationDays = document.querySelector("#simulationDays");
     return;
   }
 
-  const vehiclePresets = {
-    custom: {
-      label: "Custom",
-      batteryCost: 12000,
-      batteryCapacity: 77,
-      chargerPower: 21,
-    },
+const vehiclePresets = {
+  custom: {
+    label: "Custom",
+    batteryCost: 12000,
+    batteryCapacity: 77,
+    chargerPower: 21,
+    eolLossPct: 20,
+  },
 
-    "vw-id4": {
-      label: "VW ID.4",
-      batteryCost: 12000,
-      batteryCapacity: 77,
-      chargerPower: 21,
-    },
+  "hyundai-ioniq-5": {
+    label: "Hyundai IONIQ 5",
+    batteryCost: 11500,
+    batteryCapacity: 77,
+    chargerPower: 11,
+    eolLossPct: 20,
+  },
 
-    "tesla-model-y": {
-      label: "Tesla Model Y",
-      batteryCost: 13500,
-      batteryCapacity: 75,
-      chargerPower: 22,
-    },
+  "kia-ev6": {
+    label: "Kia EV6",
+    batteryCost: 11500,
+    batteryCapacity: 77,
+    chargerPower: 11,
+    eolLossPct: 20,
+  },
 
-    "renault-kangoo-e-tech": {
-      label: "Renault Kangoo E-Tech",
-      batteryCost: 8500,
-      batteryCapacity: 45,
-      chargerPower: 11,
-    },
+  "nissan-leaf": {
+    label: "Nissan Leaf",
+    batteryCost: 7500,
+    batteryCapacity: 40,
+    chargerPower: 6.6,
+    eolLossPct: 20,
+  },
 
-    "mercedes-e-vito": {
-      label: "Mercedes eVito",
-      batteryCost: 11000,
-      batteryCapacity: 60,
-      chargerPower: 11,
-    },
-  };
+  "mitsubishi-outlander-phev": {
+    label: "Mitsubishi Outlander PHEV",
+    batteryCost: 3500,
+    batteryCapacity: 13.8,
+    chargerPower: 3.7,
+    eolLossPct: 20,
+  },
+
+  "byd-atto-3": {
+    label: "BYD Atto 3",
+    batteryCost: 9000,
+    batteryCapacity: 60,
+    chargerPower: 11,
+    eolLossPct: 20,
+  },
+
+  "byd-han": {
+    label: "BYD Han",
+    batteryCost: 12500,
+    batteryCapacity: 85,
+    chargerPower: 11,
+    eolLossPct: 20,
+  },
+
+  "byd-tang": {
+    label: "BYD Tang",
+    batteryCost: 12500,
+    batteryCapacity: 86,
+    chargerPower: 11,
+    eolLossPct: 20,
+  },
+
+  "vw-id3": {
+    label: "Volkswagen ID.3",
+    batteryCost: 9000,
+    batteryCapacity: 58,
+    chargerPower: 11,
+    eolLossPct: 20,
+  },
+
+  "vw-id4": {
+    label: "Volkswagen ID.4",
+    batteryCost: 12000,
+    batteryCapacity: 77,
+    chargerPower: 11,
+    eolLossPct: 20,
+  },
+
+  "vw-id7": {
+    label: "Volkswagen ID.7",
+    batteryCost: 13000,
+    batteryCapacity: 77,
+    chargerPower: 11,
+    eolLossPct: 20,
+  },
+
+  "bmw-ix": {
+    label: "BMW iX",
+    batteryCost: 16000,
+    batteryCapacity: 105,
+    chargerPower: 11,
+    eolLossPct: 20,
+  },
+
+  "bmw-i4": {
+    label: "BMW i4",
+    batteryCost: 12500,
+    batteryCapacity: 84,
+    chargerPower: 11,
+    eolLossPct: 20,
+  },
+
+  "bmw-i5": {
+    label: "BMW i5",
+    batteryCost: 12500,
+    batteryCapacity: 81,
+    chargerPower: 11,
+    eolLossPct: 20,
+  },
+};
 
   function createVehicleRow(values = {}) {
     const row = document.createElement("div");
@@ -175,12 +252,12 @@ const simulationDays = document.querySelector("#simulationDays");
         <label class="field">
           <span>Vehicle model</span>
           <select class="vehicle-model">
-            <option value="custom">Custom</option>
-            <option value="vw-id4">VW ID.4</option>
-            <option value="tesla-model-y">Tesla Model Y</option>
-            <option value="renault-kangoo-e-tech">Renault Kangoo E-Tech</option>
-            <option value="mercedes-e-vito">Mercedes eVito</option>
-          </select>
+  ${Object.entries(vehiclePresets)
+    .map(([value, preset]) => {
+      return `<option value="${value}">${preset.label}</option>`;
+    })
+    .join("")}
+</select>
         </label>
 
 
@@ -242,29 +319,31 @@ const simulationDays = document.querySelector("#simulationDays");
       </div>
     `;
 
-    const modelSelect = row.querySelector(".vehicle-model");
-    const batteryCostInput = row.querySelector(".battery-cost");
-    const batteryCapacityInput = row.querySelector(".battery-capacity");
-    const chargerPowerInput = row.querySelector(".charger-power");
-    const removeButton = row.querySelector(".remove-vehicle-button");
+const modelSelect = row.querySelector(".vehicle-model");
+const batteryCostInput = row.querySelector(".battery-cost");
+const batteryCapacityInput = row.querySelector(".battery-capacity");
+const chargerPowerInput = row.querySelector(".charger-power");
+const eolLossPctInput = row.querySelector(".eol-loss-pct");
+const removeButton = row.querySelector(".remove-vehicle-button");
 
-    const csvDropzone = row.querySelector(".vehicle-csv-dropzone");
-    const csvInput = row.querySelector(".csv-input");
-    const csvFileName = row.querySelector(".csv-file-name");
+const csvDropzone = row.querySelector(".vehicle-csv-dropzone");
+const csvInput = row.querySelector(".csv-input");
+const csvFileName = row.querySelector(".csv-file-name");
 
-    modelSelect.value = values.model ?? "custom";
+modelSelect.value = values.model ?? "custom";
 
-    modelSelect.addEventListener("change", () => {
-      const preset = vehiclePresets[modelSelect.value];
+modelSelect.addEventListener("change", () => {
+  const preset = vehiclePresets[modelSelect.value];
 
-      if (!preset || modelSelect.value === "custom") {
-        return;
-      }
+  if (!preset || modelSelect.value === "custom") {
+    return;
+  }
 
-      batteryCostInput.value = preset.batteryCost;
-      batteryCapacityInput.value = preset.batteryCapacity;
-      chargerPowerInput.value = preset.chargerPower;
-    });
+  batteryCostInput.value = preset.batteryCost;
+  batteryCapacityInput.value = preset.batteryCapacity;
+  chargerPowerInput.value = preset.chargerPower;
+  eolLossPctInput.value = preset.eolLossPct;
+});
 
     removeButton.addEventListener("click", () => {
       const rows = vehicleRows.querySelectorAll(".vehicle-row");
@@ -351,14 +430,15 @@ const simulationDays = document.querySelector("#simulationDays");
   }
 
   addVehicleTypeButton.addEventListener("click", () => {
-    createVehicleRow({
-      model: "custom",
-      batteryCost: 12000,
-      batteryCapacity: 77,
-      chargerPower: 21,
-      vehicleCount: 10,
-    });
+  createVehicleRow({
+    model: "custom",
+    batteryCost: 12000,
+    batteryCapacity: 77,
+    chargerPower: 21,
+    eolLossPct: 20,
+    vehicleCount: 10,
   });
+});
 
   calculateButton.addEventListener("click", async () => {
     console.log("Calculate button clicked");
