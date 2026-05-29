@@ -29,8 +29,9 @@ SLOW = [
     "engine.tests.test_step5",   # KIT-Degradation
     "engine.tests.test_step6",   # Verschleiss-Strafterm-Sweep
     "engine.tests.test_step7",   # FCR
-    "engine.tests.test_step8",   # k-Kalibrierung + Fallback + FCR-Verschleiss
+    "engine.tests.test_step8",   # k-Kalibrierung (Brent) + Fallback + FCR-Verschleiss
     "engine.tests.test_step9",   # EoL-Modell + 1-MW-Pool
+    "engine.tests.test_step10",  # zeitvariable Strafe k(SoC)
 ]
 
 

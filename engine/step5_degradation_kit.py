@@ -130,16 +130,20 @@ def simulate_capacity_fade(
 ) -> AgingResult:
     """Laesst das KIT-Modell tageweise laufen und verfolgt den Kapazitaetsverlust.
 
+    Die Laenge von cell_power_w bestimmt den Zeitraum (Vielfaches eines Tages).
+
     temp_ambient_c: konstante Umgebungstemperatur (Annahme - wir haben keine
     fahrzeugspezifischen Temperaturdaten; 25 C ist die Referenz der NREL-Studie).
     """
-    assert len(cell_power_w) == TOTAL_STEPS
+    n_steps = len(cell_power_w)
+    assert n_steps % STEPS_PER_DAY == 0, "Laenge muss ein Vielfaches eines Tages (96) sein"
+    n_days = n_steps // STEPS_PER_DAY
 
     cap_aged, aging_states, temp_cell, soc = kit.init(storage_soc=start_soc_frac)
     cap_initial = cap_aged
 
-    cap_per_day = np.empty(N_DAYS)
-    for day in range(N_DAYS):
+    cap_per_day = np.empty(n_days)
+    for day in range(n_days):
         s = day * STEPS_PER_DAY
         e = s + STEPS_PER_DAY
         p_day = cell_power_w[s:e]

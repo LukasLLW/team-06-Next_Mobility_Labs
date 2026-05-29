@@ -87,7 +87,9 @@ def optimize_window(
     start_soc_kwh: float,
     end_soc_min_kwh: float | None = None,   # Mindest-SoC am Fensterende (optional)
     allow_discharge: bool = True,    # False = Baseline (nur laden, kein V2G-Entladen)
-    wear_cost_per_kwh: float = 0.0,  # Verschleiss-Strafe pro kWh Durchsatz (EUR/kWh)
+    wear_cost_per_kwh: float | np.ndarray = 0.0,  # Verschleiss-Strafe pro kWh.
+                                     # Skalar (konstantes k) ODER Array der Laenge N
+                                     # (zeitvariables k[t], z.B. aus k(SoC), Schritt 10)
     fcr_price_eur_per_kw_per_step: np.ndarray | None = None,  # FCR-Preis (EUR/kW/Schritt)
     fcr_activation_hours: float = 0.25,  # vorzuhaltende Abruf-Dauer (15 min)
 ) -> WindowResult:
@@ -113,6 +115,11 @@ def optimize_window(
     soc_max = battery.soc_max_kwh
     max_step = battery.max_energy_per_step_kwh
     use_fcr = fcr_price_eur_per_kw_per_step is not None
+    # Verschleiss-Strafe: Skalar -> konstantes Array; sonst pro-Schritt-Array
+    if np.isscalar(wear_cost_per_kwh):
+        wear_arr = np.full(N, float(wear_cost_per_kwh))
+    else:
+        wear_arr = np.asarray(wear_cost_per_kwh, dtype=float)
 
     prob = pulp.LpProblem("v2g_window", pulp.LpMaximize)
 
@@ -169,7 +176,7 @@ def optimize_window(
         price_eur_per_kwh[t] * (discharge[t] - charge[t]) for t in range(N)
     )
     verschleiss = pulp.lpSum(
-        wear_cost_per_kwh * (charge[t] + discharge[t]) for t in range(N)
+        wear_arr[t] * (charge[t] + discharge[t]) for t in range(N)
     )
     fcr_erloes = (pulp.lpSum(fcr_price_eur_per_kw_per_step[t] * fcr[t] for t in range(N))
                   if use_fcr else 0)
@@ -230,22 +237,25 @@ def run_rolling_year(
     lookahead_days: int = 2,         # wie weit der Optimierer schaut
     commit_days: int = 1,            # wie viele Tage er davon umsetzt
     allow_discharge: bool = True,    # False = Baseline (nur laden, kein V2G)
-    wear_cost_per_kwh: float = 0.0,  # Verschleiss-Strafe pro kWh Durchsatz
+    wear_cost_per_kwh: float | np.ndarray = 0.0,  # Skalar ODER Array (zeitvariables k[t])
     fcr_price_eur_per_kw_per_step: np.ndarray | None = None,  # FCR-Preis (Schritt 7)
     fcr_activation_hours: float = 0.25,
     progress: bool = False,
 ) -> YearPlan:
-    """Plant das ganze Jahr rollierend (siehe Modul-Doku)."""
-    assert len(price_eur_per_kwh) == TOTAL_STEPS
+    """Plant rollierend (siehe Modul-Doku). Laenge der Eingabe-Arrays bestimmt
+    den simulierten Zeitraum - es muss kein ganzes Jahr sein, aber ein
+    Vielfaches eines Tages (96 Schritte)."""
+    n_steps = len(price_eur_per_kwh)
+    assert n_steps % STEPS_PER_DAY == 0, "Laenge muss ein Vielfaches eines Tages (96) sein"
     use_fcr = fcr_price_eur_per_kw_per_step is not None
 
     if start_soc_kwh is None:
         start_soc_kwh = BATTERY_START_SOC_FRAC * battery.capacity_kwh
 
-    charge_year = np.zeros(TOTAL_STEPS)
-    discharge_year = np.zeros(TOTAL_STEPS)
-    fcr_year = np.zeros(TOTAL_STEPS) if use_fcr else None
-    soc_year = np.zeros(TOTAL_STEPS + 1)
+    charge_year = np.zeros(n_steps)
+    discharge_year = np.zeros(n_steps)
+    fcr_year = np.zeros(n_steps) if use_fcr else None
+    soc_year = np.zeros(n_steps + 1)
     soc_year[0] = start_soc_kwh
 
     commit_steps = commit_days * STEPS_PER_DAY
@@ -255,18 +265,21 @@ def run_rolling_year(
     infeasible_days = 0
 
     start = 0
-    while start < TOTAL_STEPS:
-        # Fenster = [start, window_end), aber nicht ueber das Jahresende hinaus
-        window_end = min(start + look_steps, TOTAL_STEPS)
-        commit_end = min(start + commit_steps, TOTAL_STEPS)
+    while start < n_steps:
+        # Fenster = [start, window_end), aber nicht ueber das Ende hinaus
+        window_end = min(start + look_steps, n_steps)
+        commit_end = min(start + commit_steps, n_steps)
 
         # Ist dies das letzte Fenster (kein "morgen" mehr zum Vorausschauen)?
-        is_last = window_end >= TOTAL_STEPS
+        is_last = window_end >= n_steps
         # Im letzten Fenster: Akku am Ende nicht leerraeumen -> auf Startniveau halten
         end_min = start_soc_kwh if is_last else None
 
         fcr_slice = (fcr_price_eur_per_kw_per_step[start:window_end]
                      if use_fcr else None)
+        # Verschleiss-Strafe: zeitvariables Array aufs Fenster zuschneiden
+        wear_slice = (wear_cost_per_kwh[start:window_end]
+                      if not np.isscalar(wear_cost_per_kwh) else wear_cost_per_kwh)
         res = optimize_window(
             price_eur_per_kwh[start:window_end],
             consumption_kwh[start:window_end],
@@ -275,7 +288,7 @@ def run_rolling_year(
             start_soc_kwh=current_soc,
             end_soc_min_kwh=end_min,
             allow_discharge=allow_discharge,
-            wear_cost_per_kwh=wear_cost_per_kwh,
+            wear_cost_per_kwh=wear_slice,
             fcr_price_eur_per_kw_per_step=fcr_slice,
             fcr_activation_hours=fcr_activation_hours,
         )
@@ -296,7 +309,7 @@ def run_rolling_year(
 
         if progress and (start // commit_steps) % 30 == 0:
             day = start // STEPS_PER_DAY
-            print(f"    ... Tag {day:3d}/365 geplant")
+            print(f"    ... Tag {day:3d}/{n_steps // STEPS_PER_DAY} geplant")
 
         start = commit_end
 

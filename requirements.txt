@@ -1,0 +1,19 @@
+# Plug & Earn - V2G-Ertragssimulation
+# Python 3.10+ empfohlen.  Installation:  pip install -r requirements.txt
+
+numpy>=1.24        # numerische Arrays (Zeitleisten, Profile)
+pandas>=2.0        # Einlesen/Aufbereiten der Preis- und FCR-Daten
+scipy>=1.11        # 1-D-Optimierung (Brent) bei der k-Kalibrierung
+pulp>=2.7          # linearer Optimierer (CBC) im Lade-/Entlade-/FCR-Plan
+requests>=2.31     # Download der SMARD- und regelleistung.net-Marktdaten
+openpyxl>=3.1      # liest die FCR-Tender-xlsx von regelleistung.net
+
+# Hinweis: Das KIT-Batteriemodell unter bat-age-model/ wird direkt importiert
+# (bat_model_v01_fast.py + wltp_profiles.py) und benoetigt nur numpy + pandas
+# (oben bereits enthalten). Es wurde mit zwei kleinen Fixes pandas>=2.0-kompatibel
+# gemacht.
+#
+# Die uebrigen Pakete aus bat-age-model/requirements.txt (matplotlib, plotly,
+# kaleido, plotly-resampler, coloredlogs, pyarrow, pytz) brauchen wir BEWUSST
+# NICHT: sie sind nur fuer die Plot- und use_case-Skripte des KIT-Repos, die wir
+# nicht ausfuehren. (Verifiziert: der Import des fast-Modells laeuft ohne sie.)

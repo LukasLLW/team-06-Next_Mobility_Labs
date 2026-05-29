@@ -2,34 +2,28 @@
 step8_calibrate_wear.py
 =======================
 
-SCHRITT 8: Den Verschleiss-Strafterm k selbstkonsistent kalibrieren
-(Fixpunkt-Iteration).
+SCHRITT 8: Den Verschleiss-Strafterm k bestimmen, der den Netto-Gewinn
+MAXIMIERT - per echter 1-D-Optimierung (goldener Schnitt / Brent).
 
-Problem (aus der Diskussion): In Schritt 6 haben wir k von Hand auf 2 ct/kWh
-gesetzt. Ist k zu niedrig, tradet der Optimierer zu viel; ist k zu hoch, zu
-wenig. Wir wollen k so, dass es die TATSAECHLICHEN Verschleisskosten pro kWh
-trifft, die das KIT-Modell im Betriebspunkt misst.
+Warum nicht Fixpunkt, nicht Sweep?
+  - Ein frueherer Fixpunkt "k = Durchschnittskosten(k)" loeste die FALSCHE
+    Gleichung: bei konvexer Alterung gibt es dafuer keinen stabilen Fixpunkt
+    (die Iteration kollabiert).
+  - Ein Sweep (festes Raster) ist stumpf und ineffizient.
+  - Das richtige Ziel ist: argmax_k  Netto(k). Das ist eine 1-D-Optimierung.
+    Netto(k) ist unimodal (k=0: viel Arbitrage + viel Verschleiss; k gross:
+    nur FCR), daher findet Brent das Maximum gezielt in ~10 Auswertungen.
 
-Fixpunkt-Idee:
-  1) optimiere V2G-Plan mit aktuellem k
-  2) miss mit dem KIT-Modell die echten V2G-Mehralterungskosten (EUR)
-  3) teile durch den ZUSAETZLICHEN Durchsatz (V2G ueber Baseline hinaus)
-     -> tatsaechliche Kosten pro kWh
-  4) setze k = diese Kosten (mit etwas Daempfung fuer Stabilitaet)
-  5) wiederhole, bis sich k kaum noch aendert
-
-Hinweis: Das trifft die DURCHSCHNITTLICHEN Mehrkosten pro kWh. Weil die echte
-Alterung konvex ist (mehr Zyklen -> ueberproportional mehr Verschleiss), liegen
-die GRENZkosten etwas hoeher. Der Baseline-Fallback aus Schritt 6 faengt den
-Rest ab (Netto kann nie unter 0 fallen). Fuer exakte Grenzkosten muesste man
-eine finite Differenz zweier Durchsatz-Niveaus bilden - hier bewusst einfach.
+Jede Auswertung Netto(k) kostet einen Optimierer-Lauf + eine KIT-Bewertung -
+deshalb am besten auf einem kurzen Zeitraum kalibrieren (siehe run_demo --days).
 """
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 import numpy as np
+from scipy.optimize import minimize_scalar
 
 from . import config
 from .step3_battery import BatteryModel
@@ -41,8 +35,27 @@ from .step6_net_profit import degradation_cost_eur
 @dataclass
 class CalibrationResult:
     k_final: float                   # kalibrierter Strafterm (EUR/kWh)
-    history: list[tuple]             # [(k_in, extra_throughput, k_out), ...]
-    converged: bool
+    net_at_k_final: float            # erzielter Netto-Gewinn bei k_final
+    history: list = field(default_factory=list)  # [(k, net), ...] alle Auswertungen
+    converged: bool = False
+
+
+def _net_profit_at_k(
+    k, price, consumption, plugged, battery, baseline_plan,
+    fcr, cost_per_kwh, temp,
+) -> float:
+    """Netto-Gewinn (best case) fuer einen gegebenen Strafterm k."""
+    plan = run_rolling_year(price, consumption, plugged, battery,
+                            wear_cost_per_kwh=k,
+                            fcr_price_eur_per_kw_per_step=fcr)
+    baseline_trading = float(np.sum(
+        price * (baseline_plan.discharge_kwh - baseline_plan.charge_kwh)))
+    incremental_trading = plan.total_profit_eur - baseline_trading
+    cmp = compare_baseline_vs_v2g(
+        baseline_plan.charge_kwh, baseline_plan.discharge_kwh,
+        plan.charge_kwh, plan.discharge_kwh, consumption, battery, temp)
+    deg = degradation_cost_eur(cmp.extra_fade_percent, battery.capacity_kwh, cost_per_kwh)
+    return incremental_trading + plan.total_fcr_revenue_eur - deg
 
 
 def calibrate_wear_cost(
@@ -53,64 +66,30 @@ def calibrate_wear_cost(
     baseline_plan: YearPlan,
     fcr_price_eur_per_kw_per_step: np.ndarray | None = None,
     cost_per_kwh: float = config.BATTERY_COST_EUR_PER_KWH,
-    k_start: float = 0.02,
-    max_iter: int = 6,
-    tol: float = 0.001,              # Konvergenz, wenn |k_neu - k| < 1 ct/10
-    damping: float = 0.5,            # 0..1, daempft die k-Anpassung
+    k_max: float = 0.50,             # Obergrenze fuer die Suche (50 ct/kWh)
     temp_ambient_c: float = 25.0,
     verbose: bool = True,
+    # Akzeptiert (und ignoriert) Alt-Parameter fuer Rueckwaertskompatibilitaet:
+    **_legacy,
 ) -> CalibrationResult:
-    """Findet per Fixpunkt-Iteration den selbstkonsistenten Strafterm k."""
-    baseline_throughput = float(baseline_plan.charge_kwh.sum()
-                                + baseline_plan.discharge_kwh.sum())
+    """Findet per 1-D-Optimierung (Brent, bounded) das k, das Netto(k) maximiert."""
+    history: list = []
 
-    k = k_start
-    history = []
-    converged = False
-
-    for it in range(max_iter):
-        # 1) Plan mit aktuellem k
-        plan = run_rolling_year(
-            price_eur_per_kwh, consumption_kwh, plugged_in, battery,
-            wear_cost_per_kwh=k,
-            fcr_price_eur_per_kw_per_step=fcr_price_eur_per_kw_per_step,
-        )
-        throughput = float(plan.charge_kwh.sum() + plan.discharge_kwh.sum())
-        extra_throughput = throughput - baseline_throughput
-
-        if extra_throughput <= 1e-6:
-            # Der Optimierer tradet nicht mehr ueber die Baseline hinaus.
-            if verbose:
-                print(f"    Iter {it}: k={k*100:.2f} ct -> kein Mehr-Durchsatz, stop.")
-            history.append((k, 0.0, k))
-            converged = True
-            break
-
-        # 2) echte Mehralterungskosten messen
-        cmp = compare_baseline_vs_v2g(
-            baseline_plan.charge_kwh, baseline_plan.discharge_kwh,
-            plan.charge_kwh, plan.discharge_kwh,
-            consumption_kwh, battery, temp_ambient_c,
-        )
-        deg_cost = degradation_cost_eur(cmp.extra_fade_percent,
-                                        battery.capacity_kwh, cost_per_kwh)
-
-        # 3) tatsaechliche Kosten pro zusaetzlicher kWh Durchsatz
-        k_measured = deg_cost / extra_throughput
-
+    def neg_net(k: float) -> float:
+        net = _net_profit_at_k(k, price_eur_per_kwh, consumption_kwh, plugged_in,
+                               battery, baseline_plan, fcr_price_eur_per_kw_per_step,
+                               cost_per_kwh, temp_ambient_c)
+        history.append((float(k), float(net)))
         if verbose:
-            print(f"    Iter {it}: k={k*100:.2f} ct -> Mehr-Durchsatz "
-                  f"{extra_throughput:.0f} kWh, Degr {deg_cost:.0f} EUR "
-                  f"-> gemessen {k_measured*100:.2f} ct/kWh")
+            print(f"    k={k*100:6.2f} ct/kWh -> Netto {net:8.1f} EUR")
+        return -net
 
-        history.append((k, extra_throughput, k_measured))
+    res = minimize_scalar(neg_net, bounds=(0.0, k_max), method="bounded",
+                          options={"xatol": 0.003, "maxiter": 20})
 
-        # 4) k aktualisieren (gedaempft)
-        k_new = (1 - damping) * k + damping * k_measured
-        if abs(k_new - k) < tol:
-            k = k_new
-            converged = True
-            break
-        k = k_new
-
-    return CalibrationResult(k_final=k, history=history, converged=converged)
+    return CalibrationResult(
+        k_final=float(res.x),
+        net_at_k_final=float(-res.fun),
+        history=history,
+        converged=bool(res.success),
+    )

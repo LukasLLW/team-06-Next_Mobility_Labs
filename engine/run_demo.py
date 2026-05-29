@@ -22,19 +22,28 @@ from __future__ import annotations
 
 import argparse
 import time
+from datetime import date
 from pathlib import Path
 
+import numpy as np
+
 from engine import config
+from engine.config import STEPS_PER_DAY, YEAR_START
 from engine.step1_load_trips import load_car_timeline
 from engine.step2_load_prices import load_price_timeline, price_source
 from engine.step3_battery import BatteryModel
 from engine.step4_optimizer import run_rolling_year
-from engine.step6_net_profit import evaluate_scenario
+from engine.step6_net_profit import evaluate_scenario, evaluate_plan
 from engine.step7_load_fcr_prices import load_fcr_timeline, fcr_source
 from engine.step8_calibrate_wear import calibrate_wear_cost
 from engine.step9_fcr_pool import min_pool_size_for_fcr
+from engine.step10_soc_wear import calibrate_k_of_soc, make_k_of_soc, plan_with_soc_wear
 
 DEMO_DIR = Path(__file__).resolve().parent.parent / "demodata"
+
+
+def _slice(arr, start_step, end_step):
+    return arr[start_step:end_step]
 
 
 def main():
@@ -43,7 +52,24 @@ def main():
     ap.add_argument("--pool", type=int, default=None,
                     help="Anzahl Autos im FCR-Pool (Default: als ausreichend angenommen)")
     ap.add_argument("--no-fcr", action="store_true", help="ohne FCR rechnen")
+    ap.add_argument("--from", dest="from_date", default=None,
+                    help="Startdatum YYYY-MM-DD (Default: Jahresanfang)")
+    ap.add_argument("--days", type=int, default=None,
+                    help="Anzahl simulierter Tage (Default: ganzes Jahr)")
+    ap.add_argument("--wear", choices=["const", "soc"], default="const",
+                    help="Verschleiss-Strafe: 'const' = ein optimiertes k (Brent), "
+                         "'soc' = zeitvariables k(SoC(t)) aus KIT-Sweep")
     args = ap.parse_args()
+
+    # Zeitraum bestimmen
+    if args.from_date:
+        d = date.fromisoformat(args.from_date)
+        start_day = (d - YEAR_START).days
+    else:
+        start_day = 0
+    n_days = args.days if args.days else (config.N_DAYS - start_day)
+    start_step = start_day * STEPS_PER_DAY
+    end_step = (start_day + n_days) * STEPS_PER_DAY
 
     car_csv = DEMO_DIR / f"fahrtdaten_2025_{args.car:02d}.csv"
     bat = BatteryModel()
@@ -56,44 +82,71 @@ def main():
           f"Kosten {config.BATTERY_COST_EUR_PER_KWH:.0f} EUR/kWh, "
           f"EoL bei {config.BATTERY_EOL_LOSS_PCT:.0f} % Verlust")
 
-    # --- Daten laden ---
+    # --- Daten laden und auf den Zeitraum zuschneiden ---
     trips, tl = load_car_timeline(car_csv)
-    price = load_price_timeline() / 1000.0
-    fcr = (None if args.no_fcr else load_fcr_timeline() / 1000.0)
-    print(f"Fahrten: {len(trips)} | Verbrauch: {tl.consumption_kwh.sum():.0f} kWh/Jahr | "
-          f"angesteckt: {tl.plugged_in.mean()*24:.1f} h/Tag")
+    price_full = load_price_timeline() / 1000.0
+    fcr_full = (None if args.no_fcr else load_fcr_timeline() / 1000.0)
+
+    consumption = _slice(tl.consumption_kwh, start_step, end_step)
+    plugged = _slice(tl.plugged_in, start_step, end_step)
+    price = _slice(price_full, start_step, end_step)
+    fcr = (None if args.no_fcr else _slice(fcr_full, start_step, end_step))
+
+    end_day_date = YEAR_START.fromordinal(YEAR_START.toordinal() + start_day + n_days - 1)
+    print(f"Zeitraum: {YEAR_START.fromordinal(YEAR_START.toordinal()+start_day)} "
+          f"bis {end_day_date} ({n_days} Tage)")
+    print(f"Fahrten gesamt: {len(trips)} | Verbrauch im Zeitraum: {consumption.sum():.0f} kWh | "
+          f"angesteckt: {plugged.mean()*24:.1f} h/Tag")
     print(f"Preise: Day-Ahead={price_source()}"
           + (f", FCR={fcr_source()}" if not args.no_fcr else ""))
 
     # --- Baseline ---
     print("\n[1/3] Baseline optimieren (nur laden, kein V2G)...")
     t0 = time.time()
-    baseline = run_rolling_year(price, tl.consumption_kwh, tl.plugged_in, bat,
+    baseline = run_rolling_year(price, consumption, plugged, bat,
                                 allow_discharge=False)
     print(f"      fertig ({time.time()-t0:.0f}s)")
 
-    # --- k kalibrieren ---
-    print("[2/3] Verschleiss-Strafterm k kalibrieren...")
-    t0 = time.time()
-    calib = calibrate_wear_cost(price, tl.consumption_kwh, tl.plugged_in, bat,
-                                baseline_plan=baseline,
-                                fcr_price_eur_per_kw_per_step=fcr, verbose=False)
-    print(f"      fertig ({time.time()-t0:.0f}s), k = {calib.k_final*100:.2f} ct/kWh")
+    # --- Verschleiss-Strafe bestimmen + Szenario bewerten ---
+    if args.wear == "const":
+        print("[2/3] Konstantes k per Brent-Optimierung kalibrieren...")
+        t0 = time.time()
+        calib = calibrate_wear_cost(price, consumption, plugged, bat,
+                                    baseline_plan=baseline,
+                                    fcr_price_eur_per_kw_per_step=fcr, verbose=False)
+        print(f"      fertig ({time.time()-t0:.0f}s), k = {calib.k_final*100:.2f} ct/kWh")
 
-    # --- Szenario bewerten ---
-    print("[3/3] V2G+FCR optimieren und mit KIT-Modell bewerten...")
-    t0 = time.time()
-    s = evaluate_scenario(price, tl.consumption_kwh, tl.plugged_in, bat,
-                          wear_cost_per_kwh=calib.k_final,
-                          baseline_charge_kwh=baseline.charge_kwh,
-                          baseline_discharge_kwh=baseline.discharge_kwh,
-                          fcr_price_eur_per_kw_per_step=fcr,
-                          pool_size=args.pool)
-    print(f"      fertig ({time.time()-t0:.0f}s)")
+        print("[3/3] V2G+FCR optimieren und mit KIT-Modell bewerten...")
+        t0 = time.time()
+        s = evaluate_scenario(price, consumption, plugged, bat,
+                              wear_cost_per_kwh=calib.k_final,
+                              baseline_charge_kwh=baseline.charge_kwh,
+                              baseline_discharge_kwh=baseline.discharge_kwh,
+                              fcr_price_eur_per_kw_per_step=fcr,
+                              pool_size=args.pool)
+        print(f"      fertig ({time.time()-t0:.0f}s)")
+    else:  # soc
+        print("[2/3] k(SoC) per KIT-Sweep kalibrieren...")
+        t0 = time.time()
+        soc_grid, k_vals = calibrate_k_of_soc(bat)
+        k_func = make_k_of_soc(soc_grid, k_vals, bat.capacity_kwh)
+        print(f"      fertig ({time.time()-t0:.0f}s), "
+              f"k(SoC): {k_vals.min()*100:.1f}-{k_vals.max()*100:.1f} ct/kWh "
+              f"(Minimum bei SoC {soc_grid[k_vals.argmin()]*100:.0f} %)")
+
+        print("[3/3] Plan mit zeitvariablem k(SoC(t)) + KIT-Bewertung...")
+        t0 = time.time()
+        plan, _kvec = plan_with_soc_wear(price, consumption, plugged, bat, k_func,
+                                         fcr_price_eur_per_kw_per_step=fcr)
+        s = evaluate_plan(plan, price, consumption,
+                          baseline.charge_kwh, baseline.discharge_kwh, bat,
+                          fcr_price_eur_per_kw_per_step=fcr, pool_size=args.pool)
+        print(f"      fertig ({time.time()-t0:.0f}s)")
 
     # --- Ergebnis ---
     print("\n" + "=" * 74)
-    print("ERGEBNIS (pro Auto, pro Jahr)")
+    print(f"ERGEBNIS (pro Auto, ueber {n_days} Tage"
+          + (f" ~ hochgerechnet {365/n_days:.1f}x auf ein Jahr)" if n_days < 365 else ")"))
     print("=" * 74)
     print(f"  Arbitrage-Vorteil (ggue. nur laden) : {s.trading_profit_eur:8.0f} EUR")
     if not args.no_fcr:

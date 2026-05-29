@@ -64,7 +64,14 @@ def degradation_cost_eur(
         Kosten = (extra_fade_percent / eol_loss_pct) * (capacity_kwh * cost_per_kwh)
 
     Spezialfall eol_loss_pct = 100 -> simples lineares pro-rata-Modell
-    (jede verlorene kWh = anteilig Neupreis, ohne EoL-Schwelle)."""
+    (jede verlorene kWh = anteilig Neupreis, ohne EoL-Schwelle).
+
+    KEIN Clipping (mehr): Eine NEGATIVE Mehralterung bedeutet, dass der
+    V2G-/FCR-Plan den Akku WENIGER altern laesst als die Baseline - z.B. weil
+    der fuer FCR noetige mittlere SoC schonender ist als das Voll-Laden der
+    Baseline. Das ist ein realer Effekt des intelligenten Lade-Managements und
+    wird als negative Kosten (= Gutschrift) ehrlich ausgewiesen, statt versteckt.
+    """
     total_battery_cost = capacity_kwh * cost_per_kwh
     return (extra_fade_percent / eol_loss_pct) * total_battery_cost
 
@@ -127,6 +134,33 @@ def evaluate_scenario(
         fcr_price_eur_per_kw_per_step=fcr_price_eur_per_kw_per_step,
         fcr_activation_hours=fcr_activation_hours,
     )
+    wear_rec = (float(wear_cost_per_kwh) if np.isscalar(wear_cost_per_kwh)
+                else float(np.mean(wear_cost_per_kwh)))
+    # 2) Plan bewerten (gemeinsame Logik, auch fuer k(SoC)-Plaene nutzbar)
+    return evaluate_plan(
+        v2g, price_eur_per_kwh, consumption_kwh,
+        baseline_charge_kwh, baseline_discharge_kwh, battery,
+        cost_per_kwh=cost_per_kwh, temp_ambient_c=temp_ambient_c,
+        fcr_price_eur_per_kw_per_step=fcr_price_eur_per_kw_per_step,
+        pool_size=pool_size, wear_for_record=wear_rec,
+    )
+
+
+def evaluate_plan(
+    v2g: YearPlan,
+    price_eur_per_kwh: np.ndarray,
+    consumption_kwh: np.ndarray,
+    baseline_charge_kwh: np.ndarray,
+    baseline_discharge_kwh: np.ndarray,
+    battery: BatteryModel,
+    cost_per_kwh: float = config.BATTERY_COST_EUR_PER_KWH,
+    temp_ambient_c: float = 25.0,
+    fcr_price_eur_per_kw_per_step: np.ndarray | None = None,
+    pool_size: int | None = None,
+    wear_for_record: float = 0.0,
+) -> ScenarioResult:
+    """Bewertet einen FERTIGEN V2G-Plan (Netto best/worst, Fallback). Wird von
+    evaluate_scenario (konstantes k) UND vom k(SoC)-Modus (Schritt 10) genutzt."""
     # INKREMENTELLER Arbitrage-Vorteil: Die Stromkosten fuers FAHREN fallen in
     # beiden Welten an (Baseline und V2G) und muessen sich rausheben. Wir
     # vergleichen daher den Handels-Cashflow GEGEN die Baseline, nicht absolut.
@@ -177,7 +211,7 @@ def evaluate_scenario(
     fallback_used = net_best < 0
 
     return ScenarioResult(
-        wear_cost_per_kwh=wear_cost_per_kwh,
+        wear_cost_per_kwh=wear_for_record,
         trading_profit_eur=incremental_trading,
         fcr_revenue_eur=fcr_revenue,
         throughput_kwh=float(v2g.charge_kwh.sum() + v2g.discharge_kwh.sum()),
