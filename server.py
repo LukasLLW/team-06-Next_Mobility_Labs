@@ -40,6 +40,7 @@ class FrontendVehicleType(BaseModel):
     batteryCost: float = 12000
     batteryCapacity: float = 77
     chargerPower: float = 21
+    eolLossPct: float = 20
     vehicleCount: int = 50
     drivingPattern: str | None = "corporate"
     hasCsv: bool | None = False
@@ -123,7 +124,7 @@ def build_engine_payload(
                     "soc_min_frac": 0.10,
                     "soc_max_frac": 0.90,
                     "cost_eur_per_kwh": cost_eur_per_kwh,
-                    "eol_loss_pct": 20,
+                    "eol_loss_pct": max(float(vehicle.eolLossPct), 1.0),
                 },
             }
         )
@@ -147,20 +148,29 @@ def map_engine_result_to_frontend(engine_result: dict[str, Any]) -> dict[str, An
         }
 
     fleet = engine_result["fleet"]
+
     week = fleet["per_week"]
     month = fleet["per_month"]
+
+    week_revenue = float(week["revenue_eur"])
+    week_degradation_cost = abs(float(week["degradation_eur"]))
+    week_net_profit = week_revenue - week_degradation_cost
+
+    month_revenue = float(month["revenue_eur"])
+    month_degradation_cost = abs(float(month["degradation_eur"]))
+    month_net_profit = month_revenue - month_degradation_cost
 
     return {
         "ok": True,
         "week": {
-            "revenue": week["revenue_eur"],
-            "degradationCost": week["degradation_eur"],
-            "netProfit": week["net_best_eur"],
+            "revenue": round(week_revenue, 1),
+            "degradationCost": round(week_degradation_cost, 1),
+            "netProfit": round(week_net_profit, 1),
         },
         "month": {
-            "revenue": month["revenue_eur"],
-            "degradationCost": month["degradation_eur"],
-            "netProfit": month["net_best_eur"],
+            "revenue": round(month_revenue, 1),
+            "degradationCost": round(month_degradation_cost, 1),
+            "netProfit": round(month_net_profit, 1),
         },
         "raw": engine_result,
     }

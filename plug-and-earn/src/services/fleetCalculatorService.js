@@ -64,24 +64,25 @@ async function calculateWithPythonBackend(input) {
     }
 
     return {
-      model: vehicleType.model,
-      batteryCost: vehicleType.batteryCost,
-      batteryCapacity: vehicleType.batteryCapacity,
-      chargerPower: vehicleType.chargerPower,
-      vehicleCount: vehicleType.vehicleCount,
-      drivingPattern: vehicleType.drivingPattern,
-      hasCsv: hasValidCsv,
-      uploadIndex,
-    };
+  model: vehicleType.model,
+  batteryCost: vehicleType.batteryCost,
+  batteryCapacity: vehicleType.batteryCapacity,
+  chargerPower: vehicleType.chargerPower,
+  eolLossPct: vehicleType.eolLossPct,
+  vehicleCount: vehicleType.vehicleCount,
+  drivingPattern: vehicleType.drivingPattern,
+  hasCsv: hasValidCsv,
+  uploadIndex,
+};
   });
 
   const payload = {
-    vehicleTypes: vehicleTypesForBackend,
-    fromDate: "2025-06-01",
-    days: 14,
-    useFcr: true,
-    assumePoolSufficient: true,
-  };
+  vehicleTypes: vehicleTypesForBackend,
+  fromDate: input.fromDate || "2025-06-01",
+  days: Number(input.days || 14),
+  useFcr: true,
+  assumePoolSufficient: true,
+};
 
   const formData = new FormData();
   formData.append("payload", JSON.stringify(payload));
