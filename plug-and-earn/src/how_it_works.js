@@ -14,23 +14,23 @@ export function HowItWorksPage() {
         <section class="algorithm-board">
           <div class="algorithm-steps">
             ${StepOne()}
-            <div class="flow-arrow">→</div>
+            <div class="flow-arrow"><i class="bi bi-arrow-right"></i></div>
 
             ${StepTwo()}
-            <div class="flow-arrow">→</div>
+            <div class="flow-arrow"><i class="bi bi-arrow-right"></i></div>
 
             ${StepThree()}
-            <div class="flow-arrow">→</div>
+            <div class="flow-arrow"><i class="bi bi-arrow-right"></i></div>
 
             ${StepFour()}
-            <div class="flow-arrow">→</div>
+            <div class="flow-arrow"><i class="bi bi-arrow-right"></i></div>
 
             ${StepFive()}
           </div>
 
           <div class="optimized-line">
             <div class="line-left"></div>
-            <div class="line-check">✓</div>
+            <div class="line-check"><i class="bi bi-check-lg"></i></div>
             <div class="line-right"></div>
           </div>
 
@@ -38,28 +38,28 @@ export function HowItWorksPage() {
 
           <div class="strategy-bar">
             <div class="strategy-item">
-              <img src="./assets/icons/car.svg" alt="" />
+              <i class="bi bi-car-front"></i>
               <span>Applied to fleet<br />operations</span>
             </div>
 
             <div class="strategy-separator"></div>
 
             <div class="strategy-item">
-              <div class="strategy-icon">⚡</div>
+              <i class="bi bi-lightning-charge"></i>
               <span>Charge & discharge<br />at the right time</span>
             </div>
 
             <div class="strategy-separator"></div>
 
             <div class="strategy-item">
-              <img src="./assets/icons/euro.svg" alt="" />
+              <i class="bi bi-currency-euro"></i>
               <span>Maximize long-term<br />net revenue</span>
             </div>
 
             <div class="strategy-separator"></div>
 
             <div class="strategy-item">
-              <img src="./assets/icons/battery.svg" alt="" />
+              <i class="bi bi-battery-charging"></i>
               <span>Minimize battery wear<br />& extend lifetime</span>
             </div>
           </div>
@@ -95,9 +95,9 @@ function StepOne() {
         </div>
 
         <ul class="algo-list">
-          <li><span class="down">↓</span> Charge when prices are low</li>
-          <li><span class="up">↑</span> Discharge when prices are high</li>
-          <li><span class="grid-symbol">▥</span> Based on German grid forecast next 24h</li>
+          <li><i class="bi bi-arrow-down-short down"></i> Charge when prices are low</li>
+          <li><i class="bi bi-arrow-up-short up"></i> Discharge when prices are high</li>
+          <li><i class="bi bi-grid-3x3-gap grid-symbol"></i> Based on German grid forecast next 24h</li>
         </ul>
       </div>
     </article>
@@ -112,8 +112,8 @@ function StepTwo() {
 
       <div class="algo-card">
         <div class="scale-graphic">
-          <div class="coin">€</div>
-          <div class="stress">⌁</div>
+          <div class="coin"><i class="bi bi-currency-euro"></i></div>
+          <div class="stress"><i class="bi bi-activity"></i></div>
           <div class="scale-bar"></div>
           <div class="scale-base"></div>
         </div>
@@ -153,7 +153,7 @@ function StepThree() {
 
         <div class="objective-box">
           <strong>Maximize revenue</strong>
-          <span>−</span>
+          <span><i class="bi bi-dash-lg"></i></span>
           <strong>Penalty for cycling</strong>
         </div>
 
@@ -187,12 +187,12 @@ function StepFour() {
 
         <div class="compare-box">
           <div>
-            <img src="./assets/icons/grid.svg" alt="" />
+            <i class="bi bi-cpu"></i>
             <span>Theoretical</span>
           </div>
           <strong>vs.</strong>
           <div>
-            <img src="./assets/icons/battery.svg" alt="" />
+            <i class="bi bi-battery-full"></i>
             <span>Actual</span>
           </div>
         </div>
@@ -215,14 +215,14 @@ function StepFive() {
       <div class="algo-card">
         <div class="learning-graphic">
           <div class="learning-ring">
-            <div class="brain">☷</div>
+            <div class="brain"><i class="bi bi-bezier2"></i></div>
           </div>
         </div>
 
         <ul class="check-list">
-          <li>Adjust penalty level</li>
-          <li>Improve model accuracy</li>
-          <li>Repeat until prediction matches reality</li>
+          <li><i class="bi bi-sliders"></i> Adjust penalty level</li>
+          <li><i class="bi bi-graph-up-arrow"></i> Improve model accuracy</li>
+          <li><i class="bi bi-repeat"></i> Repeat until prediction matches reality</li>
         </ul>
 
         <p>
@@ -244,26 +244,26 @@ function OutlookSection() {
 
       <div class="outlook-steps">
         ${OutlookStepOne()}
-        <div class="outlook-arrow">→</div>
+        <div class="outlook-arrow"><i class="bi bi-arrow-right"></i></div>
 
         ${OutlookStepTwo()}
-        <div class="outlook-arrow">→</div>
+        <div class="outlook-arrow"><i class="bi bi-arrow-right"></i></div>
 
         ${OutlookStepThree()}
-        <div class="outlook-arrow">→</div>
+        <div class="outlook-arrow"><i class="bi bi-arrow-right"></i></div>
 
         ${OutlookStepFour()}
-        <div class="outlook-arrow">→</div>
+        <div class="outlook-arrow"><i class="bi bi-arrow-right"></i></div>
 
         ${OutlookStepFive()}
-        <div class="outlook-arrow">→</div>
+        <div class="outlook-arrow"><i class="bi bi-arrow-right"></i></div>
 
         ${OutlookStepSix()}
       </div>
 
       <div class="outlook-line">
         <div class="outlook-line-left"></div>
-        <div class="outlook-check">✓</div>
+        <div class="outlook-check"><i class="bi bi-check-lg"></i></div>
         <div class="outlook-line-right"></div>
       </div>
 
@@ -273,35 +273,35 @@ function OutlookSection() {
 
       <div class="outlook-result-bar">
         <div class="outlook-result-item">
-          <div class="outlook-result-icon">⌖</div>
+          <div class="outlook-result-icon"><i class="bi bi-geo-alt"></i></div>
           <span>High availability in<br />future hotspots</span>
         </div>
 
         <div class="outlook-result-separator"></div>
 
         <div class="outlook-result-item">
-          <div class="outlook-result-icon">⚡</div>
+          <div class="outlook-result-icon"><i class="bi bi-lightning-charge"></i></div>
           <span>More opportunities<br />to generate revenue</span>
         </div>
 
         <div class="outlook-result-separator"></div>
 
         <div class="outlook-result-item">
-          <img src="./assets/icons/grid.svg" alt="" />
+          <i class="bi bi-diagram-3"></i>
           <span>Better reliability for<br />grid & customers</span>
         </div>
 
         <div class="outlook-result-separator"></div>
 
         <div class="outlook-result-item">
-          <img src="./assets/icons/euro.svg" alt="" />
+          <i class="bi bi-currency-euro"></i>
           <span>Higher utilization &<br />fleet profitability</span>
         </div>
 
         <div class="outlook-result-separator"></div>
 
         <div class="outlook-result-item">
-          <div class="outlook-result-icon green">◇</div>
+          <div class="outlook-result-icon green"><i class="bi bi-globe-europe-africa"></i></div>
           <span>More sustainable<br />energy ecosystem</span>
         </div>
       </div>
@@ -336,7 +336,7 @@ function OutlookStepOne() {
         </p>
 
         <div class="outlook-note">
-          <div class="outlook-note-icon">⌖</div>
+          <div class="outlook-note-icon"><i class="bi bi-geo-alt"></i></div>
           <strong>Identify where energy<br />will be needed</strong>
         </div>
       </div>
@@ -377,7 +377,7 @@ function OutlookStepTwo() {
         </p>
 
         <div class="outlook-note">
-          <img src="./assets/icons/battery.svg" alt="" />
+          <i class="bi bi-battery-charging"></i>
           <strong>Keep headroom where<br />it matters</strong>
         </div>
       </div>
@@ -412,7 +412,7 @@ function OutlookStepThree() {
         </p>
 
         <div class="outlook-note">
-          <div class="outlook-note-icon">⌁</div>
+          <div class="outlook-note-icon"><i class="bi bi-activity"></i></div>
           <strong>Quantify flexibility<br />value by location</strong>
         </div>
       </div>
@@ -430,11 +430,11 @@ function OutlookStepFour() {
         <div class="map-card-title">Optimization objective</div>
 
         <div class="objective-row">
-          <div class="objective-circle green">€</div>
+          <div class="objective-circle green"><i class="bi bi-currency-euro"></i></div>
           <span>+</span>
-          <div class="objective-circle blue">⌖</div>
+          <div class="objective-circle blue"><i class="bi bi-geo-alt"></i></div>
           <span>=</span>
-          <div class="objective-circle purple">⌁</div>
+          <div class="objective-circle purple"><i class="bi bi-activity"></i></div>
         </div>
 
         <div class="objective-labels">
@@ -448,7 +448,7 @@ function OutlookStepFour() {
         </p>
 
         <div class="outlook-note">
-          <div class="outlook-note-icon">▣</div>
+          <div class="outlook-note-icon"><i class="bi bi-plus-circle"></i></div>
           <strong>Smarter decisions<br />with future grid needs</strong>
         </div>
       </div>
@@ -467,10 +467,10 @@ function OutlookStepFive() {
 
         <div class="germany-map ready-map">
           <img src="./assets/images/map-placeholder.svg" alt="" />
-          <span class="battery-marker marker-one">▣</span>
-          <span class="battery-marker marker-two">▣</span>
-          <span class="battery-marker marker-three">▣</span>
-          <span class="battery-marker marker-four">▣</span>
+          <span class="battery-marker marker-one"><i class="bi bi-battery-full"></i></span>
+          <span class="battery-marker marker-two"><i class="bi bi-battery-full"></i></span>
+          <span class="battery-marker marker-three"><i class="bi bi-battery-full"></i></span>
+          <span class="battery-marker marker-four"><i class="bi bi-battery-full"></i></span>
           <span class="blue-hotspot blue-one"></span>
           <span class="blue-hotspot blue-two"></span>
         </div>
@@ -480,7 +480,7 @@ function OutlookStepFive() {
         </p>
 
         <div class="outlook-note">
-          <div class="outlook-note-icon">▱</div>
+          <div class="outlook-note-icon"><i class="bi bi-lightning"></i></div>
           <strong>Be ready when the<br />market needs you</strong>
         </div>
       </div>
@@ -497,18 +497,18 @@ function OutlookStepSix() {
       <div class="outlook-card">
         <div class="outlook-learning">
           <div class="outlook-learning-ring">
-            <div class="outlook-brain">☷</div>
+            <div class="outlook-brain"><i class="bi bi-bezier2"></i></div>
           </div>
         </div>
 
         <ul class="outlook-check-list">
-          <li>Compare forecast vs. reality</li>
-          <li>Improve headroom value calculation</li>
-          <li>Continuously refine FTR strategy</li>
+          <li><i class="bi bi-arrow-left-right"></i> Compare forecast vs. reality</li>
+          <li><i class="bi bi-calculator"></i> Improve headroom value calculation</li>
+          <li><i class="bi bi-arrow-repeat"></i> Continuously refine FTR strategy</li>
         </ul>
 
         <div class="outlook-note">
-          <div class="outlook-note-icon">↻</div>
+          <div class="outlook-note-icon"><i class="bi bi-shield-check"></i></div>
           <strong>Learn, adapt,<br />outperform</strong>
         </div>
       </div>
