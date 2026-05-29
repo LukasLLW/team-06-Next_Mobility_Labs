@@ -4,6 +4,8 @@ export function router() {
   const app = document.querySelector("#app");
   const path = window.location.hash || "#/";
 
+  console.log("Current route:", path);
+
   const route = routes[path] || routes["#/"];
 
   app.innerHTML = route.page();
