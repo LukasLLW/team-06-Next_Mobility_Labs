@@ -61,4 +61,4 @@ python -m http.server 5173
 
 (know that you might need to install dependencies)
 
-For more details on the simulator and the implementation can be found in [engine readme](engine/README.md)
+More details on the simulator and the implementation can be found in [engine readme](engine/README.md)
