@@ -22,10 +22,14 @@ from __future__ import annotations
 
 import argparse
 import time
+import sys
 from datetime import date
 from pathlib import Path
 
 import numpy as np
+
+# Repo-Hauptordner importierbar machen (egal wie das Skript gestartet wird)
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from engine import config
 from engine.config import STEPS_PER_DAY, YEAR_START

@@ -37,24 +37,24 @@ Flask/FastAPI-Endpoint zu wrappen.
 
 ```jsonc
 {
-  // --- WELCHE AUTOS? Variante A: pro Auto eigener Akku ---
-  "cars": [
-    { "file": "demodata/fahrtdaten_2025_01.csv",
+  // --- DIE FLOTTE als FAHRZEUG-TYPEN: pro Typ Logbuch + Akku + ANZAHL ---
+  // Autos eines Typs sind identisch -> nur einmal gerechnet, mit count
+  // gewichtet (schnell, auch bei 1000 Autos).
+  "vehicle_types": [
+    { "count": 30,                            // Anzahl Autos dieser Art
+      "log": "demodata/fahrtdaten_2025_01.csv",
       "battery": {
         "capacity_kwh": 75,        // Nennkapazität des Akkus
-        "power_kw": 11,            // max. Lade-/Entladeleistung (AC-Wallbox 11)
+        "power_kw": 22,            // max. Lade-/Entladeleistung
         "soc_min_frac": 0.10,      // nie unter 10 % laden (schont Akku)
         "soc_max_frac": 0.90,      // nie über 90 %
         "cost_eur_per_kwh": 160,   // AKKU-Kaufpreis pro kWh (NICHT Strompreis!)
         "eol_loss_pct": 20         // Akku-Lebensende bei 20 % Kapazitätsverlust
       } },
-    { "file": "demodata/fahrtdaten_2025_02.csv",
+    { "count": 25, "log": "demodata/fahrtdaten_2025_02.csv",
       "battery": { "capacity_kwh": 60, "power_kw": 22, "cost_eur_per_kwh": 140 } }
   ],
-
-  // --- ODER Variante B (einfacher): N gleiche Demo-Autos + ein Default-Akku ---
-  // "car_count": 100,
-  // "battery": { "capacity_kwh": 75, "power_kw": 11, "cost_eur_per_kwh": 160, "eol_loss_pct": 20 },
+  // Kurzform für Demo (N gleiche Autos): "car_count": 100, "battery": {...}
 
   // --- ZEITRAUM ---
   "from_date": "2025-06-01",       // Startdatum YYYY-MM-DD (Default: Jahresanfang)
@@ -62,16 +62,18 @@ Flask/FastAPI-Endpoint zu wrappen.
 
   // --- MARKT / V2G ---
   "use_fcr": true,                 // FCR (Regelleistung) mitvermarkten?
-  "aggregator_pool_cars": 120,     // Gesamt-Autozahl im FCR-Pool (>=91 für 1 MW)
+  "assume_pool_sufficient": false, // false = echter 1-MW-Check auf der Flotte
+                                   //         (kleine Flotte -> evtl. kein FCR)
+                                   // true  = Check aus, FCR immer einplanen
 
   // --- AUSGABE-DETAILTIEFE ---
   "include_daily": true,           // tägliche Zeitreihen mitgeben (für Charts)?
-  "include_per_car": false         // Einzel-Auto-Details mitgeben? (sonst nur Flotte)
+  "include_per_car": false         // Einzel-Typ-Details mitgeben? (sonst nur Flotte)
 }
 ```
 
-Alle Akku-Felder und alle Top-Level-Felder außer den Autos sind **optional** —
-fehlt etwas, greifen die Defaults aus `config.py`.
+Alle Akku-Felder und alle Top-Level-Felder außer den Fahrzeug-Typen sind
+**optional** — fehlt etwas, greifen die Defaults aus `config.py`.
 
 #### Beispiel-OUTPUT (gekürzt)
 
@@ -104,7 +106,7 @@ fehlt etwas, greifen die Defaults aus `config.py`.
 Bei Fehler: `{ "ok": false, "error": "..." }`. Schnellster Smoke-Test:
 
 ```bash
-echo '{"car_count": 3, "from_date": "2025-06-01", "days": 7, "aggregator_pool_cars": 120, "include_daily": true}' | python -m engine.api
+echo '{"car_count": 3, "from_date": "2025-06-01", "days": 7, "assume_pool_sufficient": true, "include_daily": true}' | python -m engine.api
 ```
 
 **Wichtig zu den zwei „€/kWh":** `cost_eur_per_kwh` (~160) ist der **Akku-Kaufpreis

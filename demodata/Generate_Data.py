@@ -12,8 +12,9 @@ def generiere_fahrtdaten():
     # 3. Vorlage für die drei täglichen Fahrten erstellen
     # Format: (Start-Stunde, Start-Minute, End-Stunde, End-Minute, kWh, Charger)
     tages_fahrten = [
-        (7, 30, 8, 15, 4.5, False),   # Morgens
+        (7, 30, 8, 15, 4.5, True),   # Morgens
         (12, 0, 12, 30, 1.2, False),  # Mittags
+        (13, 0, 13, 30, 1.2, True),
         (17, 30, 18, 15, 5.0, True)   # Abends (z.B. danach ans Ladegerät angeschlossen)
     ]
     

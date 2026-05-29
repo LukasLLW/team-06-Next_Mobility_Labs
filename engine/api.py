@@ -11,22 +11,27 @@ per Kommandozeile aufrufen (Subprocess aus der Web-App):
 INPUT (JSON)
 --------------------------------------------------------------------------
 {
-  // Variante A: pro Auto eigene Daten + eigener Akku
-  "cars": [
-     {"file": "demodata/fahrtdaten_2025_01.csv",
+  // Eine Flotte besteht aus FAHRZEUG-TYPEN. Pro Typ: Logbuch (CSV), Akku-Daten
+  // und die ANZAHL Autos dieser Art. Autos eines Typs sind identisch -> werden
+  // nur einmal gerechnet und mit count gewichtet (schnell, auch bei 1000 Autos).
+  "vehicle_types": [
+     {"count": 30, "log": "demodata/fahrtdaten_2025_01.csv",
       "battery": {"capacity_kwh": 75, "power_kw": 11, "soc_min_frac": 0.10,
                   "soc_max_frac": 0.90, "cost_eur_per_kwh": 160, "eol_loss_pct": 20}},
-     {"file": "demodata/fahrtdaten_2025_02.csv",
+     {"count": 25, "log": "demodata/fahrtdaten_2025_02.csv",
       "battery": {"capacity_kwh": 60, "power_kw": 22, "cost_eur_per_kwh": 140}}
   ],
-  // Variante B (einfacher): N gleiche Demo-Autos + ein Default-Akku
-  "car_count": 5,
-  "battery": { ... wie oben, gilt als Default fuer alle ... },
+  // Alternativ (Kurzform fuer Demo): N gleiche Autos + ein Default-Akku
+  // "car_count": 50,
+  // "battery": { ... gilt als Default ... },
 
   "from_date": "2025-06-01",       // optional, Default Jahresanfang
   "days": 14,                      // optional, Default ganzes Jahr
   "use_fcr": true,
-  "aggregator_pool_cars": 120,     // Pool-Groesse fuer 1-MW-Check (>=91 noetig)
+  "assume_pool_sufficient": false, // false = echter 1-MW-Check auf der Flotte
+                                   //         (kleine Flotte -> evtl. kein FCR).
+                                   // true  = Check aus, FCR immer einplanen
+                                   //         (Annahme: Aggregator-Pool ist gross genug).
   "include_daily": true,           // taegliche Zeitreihen mitgeben?
   "include_per_car": false         // Einzel-Auto-Details mitgeben? (sonst nur Flotte)
 }
@@ -76,14 +81,18 @@ from pathlib import Path
 
 import numpy as np
 
-from . import config
-from .config import STEPS_PER_DAY, YEAR_START, N_DAYS, FCR_MIN_LOT_MW
-from .step1_load_trips import load_car_timeline
-from .step2_load_prices import load_price_timeline, price_source
-from .step3_battery import BatteryModel
-from .step7_load_fcr_prices import load_fcr_timeline, fcr_source
-from .step10_soc_wear import calibrate_k_of_soc, make_k_of_soc
-from .step11_fleet import CarSpec, simulate_fleet
+# Repo-Hauptordner importierbar machen, falls die Datei direkt (statt als Modul)
+# gestartet wird: `python engine/api.py` statt `python -m engine.api`
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+
+from engine import config
+from engine.config import STEPS_PER_DAY, YEAR_START, N_DAYS, FCR_MIN_LOT_MW
+from engine.step1_load_trips import load_car_timeline
+from engine.step2_load_prices import load_price_timeline, price_source
+from engine.step3_battery import BatteryModel
+from engine.step7_load_fcr_prices import load_fcr_timeline, fcr_source
+from engine.step10_soc_wear import calibrate_k_of_soc, make_k_of_soc
+from engine.step11_fleet import CarSpec, simulate_fleet
 
 REPO = Path(__file__).resolve().parent.parent
 
@@ -101,20 +110,33 @@ def _build_battery(bdict: dict) -> tuple[BatteryModel, float, float]:
     return bat, cost, eol
 
 
-def _resolve_cars(cfg: dict) -> list[tuple[Path, dict]]:
-    """Gibt [(csv_pfad, battery_dict), ...] zurueck."""
+def _abs(p: str) -> Path:
+    pp = Path(p)
+    return pp if pp.is_absolute() else REPO / pp
+
+
+def _resolve_types(cfg: dict) -> list[tuple[Path, dict, int]]:
+    """Gibt [(log_pfad, battery_dict, count), ...] zurueck - ein Eintrag pro
+    Fahrzeug-TYP (mit Anzahl). Unterstuetzt drei Eingabeformen."""
     global_batt = cfg.get("battery", {})
-    if cfg.get("cars"):
+
+    # Primaer: vehicle_types = [{count, log, battery}, ...]
+    if cfg.get("vehicle_types"):
         out = []
-        for c in cfg["cars"]:
-            p = Path(c["file"])
-            p = p if p.is_absolute() else REPO / p
-            batt = {**global_batt, **c.get("battery", {})}   # Auto-Override ueber Default
-            out.append((p, batt))
+        for t in cfg["vehicle_types"]:
+            batt = {**global_batt, **t.get("battery", {})}
+            out.append((_abs(t["log"]), batt, int(t.get("count", 1))))
         return out
+
+    # Legacy: cars = einzelne Autos (je count 1)
+    if cfg.get("cars"):
+        return [(_abs(c["file"]), {**global_batt, **c.get("battery", {})}, 1)
+                for c in cfg["cars"]]
+
+    # Legacy/Demo: car_count gleiche Autos -> EIN Typ mit count=N (effizient,
+    # da identisch -> nur einmal gerechnet)
     n = int(cfg.get("car_count", 1))
-    return [(REPO / "demodata" / f"fahrtdaten_2025_{i:02d}.csv", global_batt)
-            for i in range(1, n + 1)]
+    return [(REPO / "demodata" / "fahrtdaten_2025_01.csv", global_batt, n)]
 
 
 def run_simulation(cfg: dict) -> dict:
@@ -138,11 +160,11 @@ def run_simulation(cfg: dict) -> dict:
     price = (load_price_timeline() / 1000.0)[s:e]
     fcr = (load_fcr_timeline() / 1000.0)[s:e] if use_fcr else None
 
-    # --- Autos + pro-Auto-Akku + k(SoC) (mit Cache je Akku-Typ) ---
-    cars = _resolve_cars(cfg)
+    # --- Fahrzeug-Typen + pro-Typ-Akku + k(SoC) (mit Cache je Akku-Typ) ---
+    types = _resolve_types(cfg)
     k_cache: dict = {}
     car_specs: list[CarSpec] = []
-    for csv_path, bdict in cars:
+    for csv_path, bdict, count in types:
         _, tl = load_car_timeline(csv_path)
         bat, cost, eol = _build_battery(bdict)
         key = (bat.capacity_kwh, bat.power_kw, bat.soc_min_frac, bat.soc_max_frac, cost, eol)
@@ -151,19 +173,33 @@ def run_simulation(cfg: dict) -> dict:
             k_cache[key] = make_k_of_soc(grid, kv, bat.capacity_kwh)
         car_specs.append(CarSpec(
             consumption_kwh=tl.consumption_kwh[s:e], plugged_in=tl.plugged_in[s:e],
-            battery=bat, cost_per_kwh=cost, eol_loss_pct=eol, k_func=k_cache[key]))
+            battery=bat, cost_per_kwh=cost, eol_loss_pct=eol, k_func=k_cache[key],
+            count=count))
 
     # --- Flotte simulieren ---
     fleet = simulate_fleet(car_specs, price, fcr,
-                           assumed_pool_cars=cfg.get("aggregator_pool_cars"))
+                           assume_pool_sufficient=bool(cfg.get("assume_pool_sufficient", False)))
 
     annual = 365.0 / n_days
+    week_f = 7.0 / n_days                 # Zeitraum -> auf eine Woche normiert
+    month_f = (365.0 / 12.0) / n_days     # -> auf einen Monat (30.44 Tage) normiert
     power_kw_ref = car_specs[0].battery.power_kw
 
-    # Flotten-Durchschnitt der Akku-Lebensdauer (endliche Werte)
+    # Aggregate fuer die Wochen-/Monats-Mittel (Flotte gesamt, BEST CASE - konsistent
+    # mit net_best: im best case wird FCR nicht abgerufen -> nur Arbitrage-Verschleiss,
+    # sodass net_best_eur = revenue_eur - degradation_eur gilt).
+    revenue_total = fleet.total_trading_eur + fleet.total_fcr_eur
+    degr_total = fleet.total_degradation_arbitrage_eur
+
+    # Flotten-Durchschnitt der Akku-Lebensdauer (mit Anzahl gewichtet, endliche Werte)
     def _avg_life(attr):
-        vals = [getattr(c, attr) for c in fleet.per_car if math.isfinite(getattr(c, attr))]
-        return round(sum(vals) / len(vals), 1) if vals else None
+        pairs = [(getattr(c, attr), sp.count) for sp, c in zip(car_specs, fleet.per_car)
+                 if math.isfinite(getattr(c, attr))]
+        if not pairs:
+            return None
+        wsum = sum(v * w for v, w in pairs)
+        wtot = sum(w for _, w in pairs)
+        return round(wsum / wtot, 1)
 
     out = {
         "ok": True,
@@ -198,6 +234,18 @@ def run_simulation(cfg: dict) -> dict:
                 "note": (None if life_reliable else
                          f"grobe Hochrechnung aus {n_days} Tagen - fuer belastbare "
                          f"Werte >= {RELIABLE_LIFE_MIN_DAYS} Tage simulieren"),
+            },
+            # --- auf eine Woche / einen Monat normierte Mittelwerte (Flotte, BEST CASE) ---
+            # Es gilt: net_best_eur = revenue_eur - degradation_eur
+            "per_week": {
+                "net_best_eur": round(fleet.total_net_best_eur * week_f, 1),
+                "revenue_eur": round(revenue_total * week_f, 1),          # Arbitrage + FCR
+                "degradation_eur": round(degr_total * week_f, 1),         # nur Arbitrage (best case)
+            },
+            "per_month": {
+                "net_best_eur": round(fleet.total_net_best_eur * month_f, 1),
+                "revenue_eur": round(revenue_total * month_f, 1),
+                "degradation_eur": round(degr_total * month_f, 1),
             },
         },
     }

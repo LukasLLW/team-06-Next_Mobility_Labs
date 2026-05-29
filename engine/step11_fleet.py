@@ -36,13 +36,16 @@ from .step10_soc_wear import plan_with_soc_wear
 
 @dataclass
 class CarSpec:
-    """Ein Auto: Fahr-Zeitreihen + eigener Akku + Kostenparameter + k(SoC)."""
+    """Ein Fahrzeug-TYP: Fahr-Zeitreihen + eigener Akku + Kostenparameter +
+    k(SoC) + Anzahl identischer Autos dieser Art. Wird nur EINMAL simuliert und
+    mit `count` gewichtet (alle Autos eines Typs sind identisch)."""
     consumption_kwh: np.ndarray
     plugged_in: np.ndarray
     battery: BatteryModel
     cost_per_kwh: float
     eol_loss_pct: float
     k_func: object              # SoC(kWh) -> Strafe (EUR/kWh)
+    count: int = 1              # Anzahl Autos dieser Art in der Flotte
 
 
 @dataclass
@@ -131,8 +134,13 @@ def evaluate_car_detailed(
     fade_base = simulate_capacity_fade(cell_base, BATTERY_START_SOC_FRAC, temp_ambient_c)
     fade_best = simulate_capacity_fade(cell_best, BATTERY_START_SOC_FRAC, temp_ambient_c)
 
-    if plan.fcr_kw is not None and plan.fcr_kw.sum() > 0:
-        worst_act = fcr_worst_case_activation_kw(plan.fcr_kw)
+    # FCR-Verschleiss entsteht nur fuer TATSAECHLICH VERMARKTETES FCR: in
+    # Schritten, in denen der Pool die 1-MW-Schwelle nicht erreicht, wird das
+    # FCR gar nicht am Markt platziert -> kein Abruf -> kein FCR-Verschleiss.
+    mask = marketable_mask if marketable_mask is not None else np.ones(n_steps, dtype=bool)
+    fcr_marketed_kw = (plan.fcr_kw * mask) if plan.fcr_kw is not None else None
+    if fcr_marketed_kw is not None and fcr_marketed_kw.sum() > 0:
+        worst_act = fcr_worst_case_activation_kw(fcr_marketed_kw)
         cell_worst = pack_plan_to_cell_power_w(
             plan.charge_kwh, plan.discharge_kwh, spec.consumption_kwh, bat.capacity_kwh,
             extra_activation_kw=worst_act)
@@ -199,10 +207,19 @@ def simulate_fleet(
     car_specs: list[CarSpec],
     price_eur_per_kwh: np.ndarray,
     fcr_price_eur_per_kw_per_step: np.ndarray | None,
-    assumed_pool_cars: int | None = None,
+    assume_pool_sufficient: bool = False,
     temp_ambient_c: float = 25.0,
 ) -> FleetResult:
-    """Simuliert eine Flotte mit pro-Auto-Akkus und aggregiert die Ergebnisse."""
+    """Simuliert eine Flotte mit pro-Auto-Akkus und aggregiert die Ergebnisse.
+
+    1-MW-Mindestlosgroesse (zwei Verhaltensweisen):
+      - Standard: pro Zeitschritt wird geprueft, ob die FCR-Summe der TATSAECH-
+        LICHEN Flotte >= 1 MW erreicht (sonst kein FCR-Erloes in diesem Schritt).
+        Eine kleine Flotte bekommt so evtl. gar kein FCR (ehrlicher Cold-Start).
+      - assume_pool_sufficient=True: 1-MW-Check ueberspringen, FCR IMMER einplanen
+        (Annahme: die Plattform/der Aggregator-Pool ist gross genug, dauerhaft
+        >= 1 MW zu liefern). Gut, um das FCR-Potenzial einer kleinen Flotte zu sehen.
+    """
     # --- pro Auto optimieren ---
     plans, baselines = [], []
     for spec in car_specs:
@@ -219,14 +236,22 @@ def simulate_fleet(
     marketable = None
     peak_pool_mw = 0.0
     marketable_frac = 0.0
+    counts = np.array([sp.count for sp in car_specs], dtype=float)
+    n_cars_total = int(counts.sum())
+
     if use_fcr:
-        pool_fcr_kw = np.sum([p.fcr_kw for p in plans], axis=0)
-        scale = (assumed_pool_cars / len(plans)) if assumed_pool_cars else 1.0
-        pool_check = pool_fcr_kw * scale
-        marketable = (pool_check / 1000.0) >= FCR_MIN_LOT_MW
-        peak_pool_mw = float(pool_check.max() / 1000.0)
-        total_e = float(np.sum([p.fcr_kw for p in plans]))
-        mk_e = float(np.sum([p.fcr_kw[marketable].sum() for p in plans]))
+        # Pool-Leistung = Summe ueber alle Autos = Sum_Typ (Anzahl * FCR_Typ[t])
+        pool_fcr_kw = np.sum([sp.count * p.fcr_kw for sp, p in zip(car_specs, plans)], axis=0)
+        if assume_pool_sufficient:
+            # Annahme: Pool ist immer gross genug -> FCR jederzeit marktfaehig.
+            marketable = np.ones(len(pool_fcr_kw), dtype=bool)
+        else:
+            # echter 1-MW-Check auf der tatsaechlichen Flottenleistung
+            marketable = (pool_fcr_kw / 1000.0) >= FCR_MIN_LOT_MW
+        peak_pool_mw = float(pool_fcr_kw.max() / 1000.0)
+        total_e = float(np.sum([sp.count * p.fcr_kw.sum() for sp, p in zip(car_specs, plans)]))
+        mk_e = float(np.sum([sp.count * p.fcr_kw[marketable].sum()
+                             for sp, p in zip(car_specs, plans)]))
         marketable_frac = mk_e / total_e if total_e > 0 else 0.0
 
     # --- pro Auto detailliert bewerten ---
@@ -236,21 +261,25 @@ def simulate_fleet(
         for spec, plan, base in zip(car_specs, plans, baselines)
     ]
 
-    # --- Flotten-Aggregation (Summen + taegliche Summen) ---
+    # --- Flotten-Aggregation: pro Typ mit Anzahl gewichten ---
     keys = ["arbitrage_profit_eur", "fcr_profit_eur", "degradation_arbitrage_eur",
             "degradation_fcr_worst_eur", "net_best_eur", "net_worst_eur"]
-    daily_fleet = {k: np.sum([c.daily[k] for c in per_car], axis=0) for k in keys}
+    daily_fleet = {k: np.sum([sp.count * c.daily[k]
+                              for sp, c in zip(car_specs, per_car)], axis=0) for k in keys}
 
-    total_net_best = sum(c.net_best_eur for c in per_car)
+    def wsum(attr):   # mit Anzahl gewichtete Summe ueber die Typen
+        return float(sum(sp.count * getattr(c, attr) for sp, c in zip(car_specs, per_car)))
+
+    total_net_best = wsum("net_best_eur")
     return FleetResult(
-        n_cars=len(per_car), per_car=per_car,
+        n_cars=n_cars_total, per_car=per_car,
         total_net_best_eur=total_net_best,
-        total_net_worst_eur=sum(c.net_worst_eur for c in per_car),
-        total_trading_eur=sum(c.trading_eur for c in per_car),
-        total_fcr_eur=sum(c.fcr_eur for c in per_car),
-        total_degradation_arbitrage_eur=sum(c.degradation_arbitrage_eur for c in per_car),
-        total_degradation_fcr_worst_eur=sum(c.degradation_fcr_worst_eur for c in per_car),
-        avg_net_best_per_car_eur=total_net_best / len(per_car),
+        total_net_worst_eur=wsum("net_worst_eur"),
+        total_trading_eur=wsum("trading_eur"),
+        total_fcr_eur=wsum("fcr_eur"),
+        total_degradation_arbitrage_eur=wsum("degradation_arbitrage_eur"),
+        total_degradation_fcr_worst_eur=wsum("degradation_fcr_worst_eur"),
+        avg_net_best_per_car_eur=total_net_best / n_cars_total,
         pool_marketable_fraction=marketable_frac,
         peak_pool_mw=peak_pool_mw,
         daily_fleet=daily_fleet,
